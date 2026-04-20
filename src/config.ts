@@ -14,9 +14,13 @@ export const FIT_B = -17.01;
 export const BINANCE_SYMBOL = "BTCUSDT";
 export const BINANCE_INTERVAL = "1d";
 export const BINANCE_KLINE_LIMIT = 1000;
+// Default to data-api.binance.vision — Binance's public market-data mirror
+// intended for analytics/backtesting. Same payload shape as api.binance.com
+// but reachable from geo-blocked runners (e.g. GitHub-hosted) that get HTTP
+// 451 on api.binance.com. Override via AHR999_BINANCE_API_BASE_URL.
 export const BINANCE_API_BASE_URL =
   process.env.AHR999_BINANCE_API_BASE_URL?.replace(/\/+$/, "") ??
-  "https://api.binance.com";
+  "https://data-api.binance.vision";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
