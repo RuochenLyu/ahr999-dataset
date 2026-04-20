@@ -1,6 +1,6 @@
 {
   "name": "ahr999-dataset",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Open AHR999 (Ahr999 hoarding index) dataset — daily-updated JSON/CSV + Astro dashboard.",
   "type": "module",
   "packageManager": "pnpm@9.15.0",

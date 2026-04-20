@@ -40,7 +40,7 @@ async function fetchJson(url: string): Promise<unknown> {
         headers: {
           Accept: "application/json",
           "User-Agent":
-            "ahr999-dataset/0.1.0 (+https://github.com/RuochenLyu/ahr999-dataset)",
+            "ahr999-dataset/1.0.0 (+https://github.com/RuochenLyu/ahr999-dataset)",
         },
       });
       if (!response.ok) {
