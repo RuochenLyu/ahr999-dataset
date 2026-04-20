@@ -625,7 +625,36 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
     </footer>
 
     <script>
-      import * as echarts from 'echarts';
+      import * as echarts from 'echarts/core';
+      import { LineChart, type LineSeriesOption } from 'echarts/charts';
+      import {
+        GridComponent,
+        type GridComponentOption,
+        TooltipComponent,
+        type TooltipComponentOption,
+        AxisPointerComponent,
+        DataZoomComponent,
+        type DataZoomComponentOption,
+        MarkLineComponent,
+      } from 'echarts/components';
+      import { CanvasRenderer } from 'echarts/renderers';
+
+      echarts.use([
+        LineChart,
+        GridComponent,
+        TooltipComponent,
+        AxisPointerComponent,
+        DataZoomComponent,
+        MarkLineComponent,
+        CanvasRenderer,
+      ]);
+
+      type ChartOption = echarts.ComposeOption<
+        | LineSeriesOption
+        | GridComponentOption
+        | TooltipComponentOption
+        | DataZoomComponentOption
+      >;
 
       type Row = {
         date: string;
@@ -774,7 +803,7 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
             ? 100 - (TWO_YEARS_DAYS / dates.length) * 100
             : 0;
 
-        const option: echarts.EChartsOption = {
+        const option: ChartOption = {
           backgroundColor: 'transparent',
           textStyle: { color: COLOR_FG, fontFamily: 'inherit' },
           animation: false,

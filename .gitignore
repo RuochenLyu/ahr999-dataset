@@ -3,8 +3,6 @@ dist/
 .DS_Store
 
 # Build artifacts
-web/dist/
-web/node_modules/
 web/.astro/
 
 # Generated at build time, not committed
