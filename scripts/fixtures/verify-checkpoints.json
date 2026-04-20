@@ -1,0 +1,42 @@
+[
+  {
+    "date": "2017-08-17",
+    "close": 4285.08,
+    "ma200": null,
+    "ahr999": null,
+    "quantile5y": null,
+    "windowKind": "insufficient_samples"
+  },
+  {
+    "date": "2018-03-04",
+    "close": 11515,
+    "ma200": 8756.4903,
+    "ahr999": 4.038391819727782,
+    "quantile5y": null,
+    "windowKind": "insufficient_samples"
+  },
+  {
+    "date": "2019-03-03",
+    "close": 3807.75,
+    "ma200": 5061.723800000003,
+    "ahr999": 0.418033644702878,
+    "quantile5y": 0.2136986301369863,
+    "windowKind": "expanding"
+  },
+  {
+    "date": "2023-03-02",
+    "close": 23465.32,
+    "ma200": 19733.405950000004,
+    "ahr999": 0.5866453214772102,
+    "quantile5y": 0.26301369863013696,
+    "windowKind": "rolling_5y"
+  },
+  {
+    "date": "2026-04-10",
+    "close": 72962.7,
+    "ma200": 88297.83924999998,
+    "ahr999": 0.39782177764985427,
+    "quantile5y": 0.12986301369863013,
+    "windowKind": "rolling_5y"
+  }
+]

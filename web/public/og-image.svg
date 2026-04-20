@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">AHR999 dataset</title>
+  <desc id="desc">AHR999 open dataset brand card: daily open BTC accumulation index.</desc>
+  <defs>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.7">
+      <stop offset="0%" stop-color="#111114"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </radialGradient>
+    <linearGradient id="underline" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="rgba(245,158,11,0)"/>
+      <stop offset="50%" stop-color="rgba(245,158,11,0.55)"/>
+      <stop offset="100%" stop-color="rgba(245,158,11,0)"/>
+    </linearGradient>
+    <style>
+      text { fill: #fafafa; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .wordmark { font-family: Georgia, "Times New Roman", serif; font-size: 220px; font-weight: 700; letter-spacing: -8px; }
+      .subtitle { font-size: 34px; font-weight: 500; letter-spacing: -0.4px; fill: #d4d4d8; }
+      .footer { font-size: 18px; font-weight: 600; letter-spacing: 0.6px; }
+      .footer-brand { fill: #a1a1aa; }
+      .footer-meta { fill: #71717a; }
+      .amber { fill: #f59e0b; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#vignette)"/>
+
+  <text x="640" y="340" class="wordmark" text-anchor="middle">AHR<tspan font-size="130" dy="18" class="amber">999</tspan></text>
+
+  <text x="640" y="446" class="subtitle" text-anchor="middle">Daily open BTC accumulation index</text>
+
+  <text x="80" y="594" class="footer footer-brand">ahr999.aix4u.com</text>
+  <text x="1200" y="594" class="footer footer-meta" text-anchor="end">open dataset · JSON · CSV</text>
+</svg>

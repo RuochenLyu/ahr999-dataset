@@ -1,0 +1,31 @@
+{
+  "name": "ahr999-dataset",
+  "version": "0.1.0",
+  "description": "Open AHR999 (Ahr999 hoarding index) dataset — daily-updated JSON/CSV + Astro dashboard.",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "scripts": {
+    "sync": "tsx scripts/sync.ts",
+    "sync:backfill": "tsx scripts/sync.ts --backfill",
+    "export:csv": "tsx scripts/export-csv.ts",
+    "update": "pnpm sync && pnpm export:csv",
+    "web:prepublic": "tsx scripts/prepublic.ts",
+    "web:dev": "pnpm web:prepublic && pnpm --filter ./web dev",
+    "web:build": "pnpm web:prepublic && pnpm --filter ./web build",
+    "web:preview": "pnpm --filter ./web preview",
+    "typecheck": "tsc --noEmit",
+    "verify": "tsx scripts/verify.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}

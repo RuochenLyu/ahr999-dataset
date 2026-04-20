@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.DS_Store
+
+# Build artifacts
+web/dist/
+web/node_modules/
+web/.astro/
+
+# Generated at build time, not committed
+web/public/datasets/
+
+# Temp files from atomic writes
+*.tmp
+
+# Env / secrets (no secrets expected, but defensive)
+.env
+.env.local
+
+# Editor
+.vscode/
+.idea/

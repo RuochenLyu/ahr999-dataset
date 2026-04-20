@@ -1,0 +1,25 @@
+# Data License — Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+The JSON/CSV files under `datasets/` and the derived values they contain
+(date, close, ma200, ahr999, quantile5y, windowKind) are licensed under
+the Creative Commons Attribution 4.0 International License.
+
+Full license text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+## Attribution
+
+When redistributing or building upon this dataset, please cite:
+
+    ahr999-dataset contributors (2026). "ahr999-dataset — open BTC hoarding
+    index computed from Binance BTCUSDT daily closes".
+    https://github.com/RuochenLyu/ahr999-dataset
+
+The underlying price data (Binance BTCUSDT 1-day closes) is sourced from the
+Binance public market API. This dataset does not redistribute raw OHLCV data;
+only daily close and derived AHR999 values are published.
+
+## Disclaimer
+
+This dataset is provided for research, education and observability purposes
+only. It is NOT investment advice. AHR999 is a heuristic indicator derived
+from historical price; past behavior is not predictive of future results.

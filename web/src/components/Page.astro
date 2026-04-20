@@ -1,0 +1,1007 @@
+---
+import fs from 'node:fs';
+import '../styles/global.css';
+import datasetJson from '../../public/datasets/ahr999.json';
+
+export interface Props {
+  lang: 'en' | 'zh';
+}
+
+const { lang } = Astro.props;
+const isEn = lang === 'en';
+
+type Row = {
+  date: string;
+  close: number;
+  ma200: number | null;
+  ahr999: number | null;
+  quantile5y: number | null;
+  windowKind: 'rolling_5y' | 'expanding' | 'insufficient_samples';
+};
+
+const dataset = datasetJson as Row[];
+const latest = dataset[dataset.length - 1];
+const rowCount = dataset.length;
+const firstDate = dataset[0]?.date ?? '—';
+const latestDate = latest?.date ?? '—';
+const recent30 = [...dataset].slice(-30).reverse();
+
+type Tier = { label: string; cls: string; hint: string };
+
+const t = isEn
+  ? {
+      metaTitle: (ahr: string, tier: string) =>
+        `AHR999 = ${ahr} · ${tier} · ahr999-dataset`,
+      metaDesc:
+        'Open, daily-updated AHR999 (BTC hoarding index) dataset. Self-computed from Binance BTCUSDT daily closes. Free JSON/CSV downloads.',
+
+      liveLabel: (date: string) => `Live · UTC ${date}`,
+      liveTitle: 'Automated daily update at 02:17 UTC',
+      langAria: 'Switch to Chinese',
+
+      heroEyebrow: "AHR999 — today's reading",
+      heroUtc: (d: string) => `UTC ${d}`,
+      tiers: {
+        na: { label: 'n/a', hint: '—' },
+        bargain: { label: 'bargain zone', hint: '< 0.45' },
+        dca: { label: 'DCA zone', hint: '0.45 – 1.20' },
+        caution: { label: 'caution zone', hint: '1.20 – 3.00' },
+        bubble: { label: 'bubble zone', hint: '> 3.00' },
+      },
+      heroLeadHtml: `<strong>The open reference</strong> for the AHR999 BTC hoarding index. Self-computed daily from Binance BTCUSDT closes. Free to fetch, cite and fork.`,
+
+      mBtcClose: 'BTC close',
+      mBtcCloseTag: 'USD · 1D',
+      mMa: 'MA200',
+      mMaTag: '200D · SMA',
+      mQ: '5y quantile',
+      mDelta: '7d Δ ahr',
+      mDeltaTag: 'wk change',
+
+      ctaCsvLabel: 'Download CSV',
+      ctaJsonLabel: 'JSON',
+      ctaNote: (rows: string) => `${rows} rows · CC-BY-4.0`,
+
+      legendBtc: 'BTC price · left',
+      legendMa: '200-day DCA cost · left',
+      legendAhr: 'ahr999 · right',
+      legendFloor: 'Bargain · 0.45',
+      legendDca: 'DCA · 1.20',
+
+      dataEyebrow: 'Recent 30 days',
+      dataTitle: 'Every UTC close, in order.',
+      dataCtaHistory: (n: string) => `Full ${n}-row history`,
+      colDate: 'Date',
+      colClose: 'Close',
+      colMa: 'MA200',
+      colAhr: 'AHR999',
+      colQ: '5y Q',
+      colRegime: 'Regime',
+
+      codeEyebrow: 'One-liner',
+      codeTitle: 'Fetch the latest reading.',
+      codeLabel: 'curl · jq · latest reading',
+      codeCopy: 'click to copy',
+      codeCopied: 'copied ✓',
+
+      aboutEyebrow: 'What is AHR999?',
+      aboutTitleHtml: `<em>AHR999</em> is a BTC dollar-cost-averaging heuristic.`,
+      aboutBody1Html: `Originally proposed by the Chinese investor <strong>九神</strong>. The formula multiplies two ratios: today's close ÷ <strong>200-day moving average</strong>, and today's close ÷ <strong>log-log fitted fair value</strong>. The lower the value, the better the entry.`,
+      aboutBody2Html: `Conventional thresholds: below <strong>0.45</strong> is the bargain zone, <strong>0.45 – 1.20</strong> is the DCA zone, <strong>1.20 – 3.00</strong> is caution, above <strong>3.00</strong> is bubble. Every value here is recomputed daily from Binance BTCUSDT closes by open-source TypeScript code in this repository — fully traceable.`,
+      chartAriaLabel: 'AHR999 index chart',
+      regimeLabels: {
+        bargain: 'Bargain',
+        dca: 'DCA',
+        caution: 'Caution',
+        bubble: 'Bubble',
+      },
+
+      footerLicense: 'code MIT · data CC-BY-4.0',
+      footerUpdated: (d: string, n: string) => `updated ${d} · ${n} rows`,
+    }
+  : {
+      metaTitle: (ahr: string, tier: string) =>
+        `AHR999 = ${ahr} · ${tier} · ahr999 数据集`,
+      metaDesc:
+        '开源、每日自动更新的 AHR999（BTC 囤币指标）数据集，基于 Binance BTCUSDT 日 K 自算。JSON / CSV 免费下载。',
+
+      liveLabel: (date: string) => `更新于 UTC ${date}`,
+      liveTitle: '每日 UTC 02:17 自动更新',
+      langAria: '切换到英文',
+
+      heroEyebrow: 'AHR999 · 今日数值',
+      heroUtc: (d: string) => `UTC ${d}`,
+      tiers: {
+        na: { label: '暂无', hint: '—' },
+        bargain: { label: '抄底区', hint: '< 0.45' },
+        dca: { label: '定投区', hint: '0.45 – 1.20' },
+        caution: { label: '谨慎区', hint: '1.20 – 3.00' },
+        bubble: { label: '泡沫区', hint: '> 3.00' },
+      },
+      heroLeadHtml: `开源的 <strong>AHR999</strong> 囤币指标数据集。基于 Binance BTCUSDT 日 K 每日自动重算并更新，免费下载、引用、转载。`,
+
+      mBtcClose: 'BTC 收盘价',
+      mBtcCloseTag: 'USD · 1D',
+      mMa: 'MA200',
+      mMaTag: '200 日均价',
+      mQ: '5 年分位',
+      mDelta: '7 日 Δ',
+      mDeltaTag: 'ahr999',
+
+      ctaCsvLabel: '下载 CSV',
+      ctaJsonLabel: 'JSON',
+      ctaNote: (rows: string) => `${rows} 行 · CC-BY-4.0`,
+
+      legendBtc: 'BTC 价格 · 左轴',
+      legendMa: '200 日定投成本 · 左轴',
+      legendAhr: 'ahr999 · 右轴',
+      legendFloor: '抄底 · 0.45',
+      legendDca: '定投 · 1.20',
+
+      dataEyebrow: '最近 30 日',
+      dataTitle: '每日 UTC 收盘。',
+      dataCtaHistory: (n: string) => `查看全部 ${n} 行`,
+      colDate: '日期',
+      colClose: '收盘价',
+      colMa: 'MA200',
+      colAhr: 'AHR999',
+      colQ: '5 年分位',
+      colRegime: '档位',
+
+      codeEyebrow: '一行命令',
+      codeTitle: '一行命令取最新值。',
+      codeLabel: 'curl · jq · 最新值',
+      codeCopy: '点击复制',
+      codeCopied: '已复制',
+
+      aboutEyebrow: '关于 AHR999',
+      aboutTitleHtml: `<em>AHR999</em> 是 BTC 的定投参考指标。`,
+      aboutBody1Html: `由投资者<strong>九神</strong>最先提出。公式是两个比值相乘：当日收盘 ÷ <strong>200 日均价</strong>，再乘以当日收盘 ÷ <strong>log-log 拟合公允价</strong>。值越低，定投越划算。`,
+      aboutBody2Html: `经验阈值：<strong>0.45</strong> 以下为抄底区，<strong>0.45 – 1.20</strong> 为定投区，<strong>1.20 – 3.00</strong> 为谨慎区，<strong>3.00</strong> 以上为泡沫区。本站数值由本仓库中的开源 TypeScript 代码每日从 Binance BTCUSDT 日 K 全量重算，逐行可追溯。`,
+      chartAriaLabel: 'AHR999 指数图表',
+      regimeLabels: {
+        bargain: '抄底区',
+        dca: '定投区',
+        caution: '谨慎区',
+        bubble: '泡沫区',
+      },
+
+      footerLicense: '代码 MIT · 数据 CC-BY-4.0',
+      footerUpdated: (d: string, n: string) => `${d} 更新 · 共 ${n} 行`,
+    };
+
+function tierFor(value: number | null | undefined): Tier {
+  if (value === null || value === undefined)
+    return { ...t.tiers.na, cls: 'tier-na' };
+  if (value < 0.45) return { ...t.tiers.bargain, cls: 'tier-bargain' };
+  if (value < 1.2) return { ...t.tiers.dca, cls: 'tier-dca' };
+  if (value < 3) return { ...t.tiers.caution, cls: 'tier-caution' };
+  return { ...t.tiers.bubble, cls: 'tier-bubble' };
+}
+
+function fmtUsd(v: number | null | undefined): string {
+  if (v === null || v === undefined) return '—';
+  return `$${v.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function fmtAhr(v: number | null | undefined): string {
+  if (v === null || v === undefined) return '—';
+  return v.toFixed(4);
+}
+
+function fmtPct(v: number | null | undefined): string {
+  if (v === null || v === undefined) return '—';
+  return `${(v * 100).toFixed(1)}%`;
+}
+
+function fmtDelta(v: number | null | undefined): string {
+  if (v === null || v === undefined) return '—';
+  const sign = v >= 0 ? '+' : '';
+  return `${sign}${v.toFixed(4)}`;
+}
+
+const tier = tierFor(latest?.ahr999 ?? null);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const datasetJsonUrl = `${base}/datasets/ahr999.json`;
+const datasetCsvUrl = `${base}/datasets/ahr999.csv`;
+const datasetJsonAbsoluteUrl = new URL(
+  datasetJsonUrl,
+  import.meta.env.SITE,
+).toString();
+const pageUrl = new URL(isEn ? `${base}/` : `${base}/zh/`, import.meta.env.SITE)
+  .toString();
+const ogImageUrl = new URL(`${base}/og-image.png`, import.meta.env.SITE)
+  .toString();
+const socialTitle = t.metaTitle(fmtAhr(latest?.ahr999 ?? null), tier.label);
+const ogImageAlt = isEn
+  ? 'AHR999 open dataset brand card: daily open BTC accumulation index.'
+  : 'AHR999 开放数据集品牌卡：日度 BTC 开盘累积指数。';
+const currentYear = new Date().getUTCFullYear();
+
+const sevenAgo = dataset[dataset.length - 8];
+const deltaAhr =
+  latest?.ahr999 !== null &&
+  latest?.ahr999 !== undefined &&
+  sevenAgo?.ahr999 !== null &&
+  sevenAgo?.ahr999 !== undefined
+    ? latest.ahr999 - sevenAgo.ahr999
+    : null;
+const deltaCls =
+  deltaAhr === null ? '' : deltaAhr >= 0 ? 'delta-up' : 'delta-down';
+
+const jsonSizeKb = Math.round(
+  fs.statSync(new URL('../../public/datasets/ahr999.json', import.meta.url)).size /
+    1024,
+);
+const csvSizeKb = Math.round(
+  fs.statSync(new URL('../../public/datasets/ahr999.csv', import.meta.url)).size /
+    1024,
+);
+
+const altLangHref = isEn ? `${base}/zh/` : `${base}/`;
+const altLangLabel = isEn ? '中' : 'EN';
+
+const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
+---
+
+<!doctype html>
+<html lang={isEn ? 'en' : 'zh-Hans'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{socialTitle}</title>
+    <meta name="description" content={t.metaDesc} />
+    <meta name="color-scheme" content="dark" />
+    <link rel="canonical" href={pageUrl} />
+    <meta property="og:title" content={socialTitle} />
+    <meta property="og:description" content={t.metaDesc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:site_name" content="ahr999 dataset" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={socialTitle} />
+    <meta name="twitter:description" content={t.metaDesc} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <link rel="alternate" hreflang="en" href={`${base}/`} />
+    <link rel="alternate" hreflang="zh-Hans" href={`${base}/zh/`} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      as="fetch"
+      href={datasetJsonUrl}
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-scan" aria-hidden="true"></div>
+    <div class="bg-glow" aria-hidden="true"></div>
+    <div class="bg-glow-alt" aria-hidden="true"></div>
+
+    <!-- HEADER -->
+    <header class="site-header">
+      <a class="brand" href={`${base}/`} aria-label="ahr999 dataset — home">
+        <span class="brand-mark">◐</span>
+        <span class="brand-name">ahr999</span>
+        <span class="brand-slash">/</span>
+        <span class="brand-sub">dataset</span>
+      </a>
+      <div class="live-indicator" title={t.liveTitle}>
+        <span class="pulse"></span>
+        <span>{t.liveLabel(latestDate)}</span>
+      </div>
+      <nav class="site-nav" aria-label="primary">
+        <a
+          href={altLangHref}
+          class="lang-toggle"
+          aria-label={t.langAria}
+          hreflang={isEn ? 'zh-Hans' : 'en'}>{altLangLabel}</a
+        >
+        <a
+          href="https://github.com/RuochenLyu/ahr999-dataset"
+          class="nav-pill"
+          target="_blank"
+          rel="noopener"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.22.48-2.69-1.07-2.69-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.81.06 1.23.83 1.23.83.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.13 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.11.16 1.93.08 2.13.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"
+            ></path>
+          </svg>
+          GitHub
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-top">
+          <div class="eyebrow reveal reveal-1">
+            <span class="label-dot"></span>
+            <span>{t.heroEyebrow}</span>
+            <span
+              class="mono"
+              style="color: var(--fg-dimmer); margin-left: 4px;"
+            >
+              {t.heroUtc(latestDate)}
+            </span>
+          </div>
+
+          <div class="display-value reveal reveal-2">
+            <span class="num">{fmtAhr(latest?.ahr999 ?? null)}</span>
+            <span class="num-sub">
+              <span class="divider" aria-hidden="true"></span>
+              <span class={`tier ${tier.cls}`}>
+                <span class="tier-glyph" aria-hidden="true"></span>
+                {tier.label}
+              </span>
+              <span class="mono" style="color: var(--fg-dim);">
+                {tier.hint}
+              </span>
+            </span>
+          </div>
+
+          <p class="hero-lead reveal reveal-3" set:html={t.heroLeadHtml}></p>
+        </div>
+
+        <div class="metric-ribbon">
+          <div class="metric-card reveal reveal-4">
+            <div class="metric-label">
+              <span>{t.mBtcClose}</span>
+              <span class="tag">{t.mBtcCloseTag}</span>
+            </div>
+            <div class="metric-value">{fmtUsd(latest?.close ?? null)}</div>
+          </div>
+          <div class="metric-card reveal reveal-5">
+            <div class="metric-label">
+              <span>{t.mMa}</span>
+              <span class="tag">{t.mMaTag}</span>
+            </div>
+            <div class="metric-value">{fmtUsd(latest?.ma200 ?? null)}</div>
+          </div>
+          <div class="metric-card reveal reveal-6">
+            <div class="metric-label">
+              <span>{t.mQ}</span>
+              <span class="tag">{latest?.windowKind ?? '—'}</span>
+            </div>
+            <div class="metric-value">
+              {fmtPct(latest?.quantile5y ?? null)}
+            </div>
+          </div>
+          <div class="metric-card reveal reveal-7">
+            <div class="metric-label">
+              <span>{t.mDelta}</span>
+              <span class="tag">{t.mDeltaTag}</span>
+            </div>
+            <div class={`metric-value ${deltaCls}`}>{fmtDelta(deltaAhr)}</div>
+          </div>
+        </div>
+
+        <div class="hero-cta-row reveal reveal-8">
+          <a href={datasetCsvUrl} class="btn-primary" download>
+            <span>{t.ctaCsvLabel}</span>
+            <span class="mono">{csvSizeKb} kB</span>
+          </a>
+          <a href={datasetJsonUrl} class="btn-ghost" download>
+            <span>{t.ctaJsonLabel}</span>
+            <span class="mono" style="color: var(--fg-dim); font-size: 10.5px;"
+              >{jsonSizeKb} kB</span
+            >
+          </a>
+          <span class="mini-note">
+            {t.ctaNote(rowCount.toLocaleString())}
+          </span>
+        </div>
+
+        <div class="chart-wrap reveal reveal-9">
+          <div class="chart-frame">
+            <div class="frame-corner tl" aria-hidden="true"></div>
+            <div class="frame-corner tr" aria-hidden="true"></div>
+            <div class="frame-corner bl" aria-hidden="true"></div>
+            <div class="frame-corner br" aria-hidden="true"></div>
+            <div class="chart-overlay">
+              <span
+                class="chip"
+                set:html={`<strong>BTCUSDT</strong> · 1d · <strong>${isEn ? 'log' : '对数'}</strong>`}
+              ></span>
+              <span
+                class="chip"
+                set:html={`<strong>ahr999</strong> · ${isEn ? 'right axis' : '右轴'}`}
+              ></span>
+            </div>
+            <div
+              id="chart"
+              data-dataset-url={datasetJsonUrl}
+              data-lang={lang}
+              role="img"
+              aria-label={t.chartAriaLabel}
+            ></div>
+          </div>
+
+          <div class="chart-legend">
+            <span class="swatch price">
+              <span class="bar" aria-hidden="true"></span>
+              <span>{t.legendBtc}</span>
+            </span>
+            <span class="swatch ma200">
+              <span class="bar" aria-hidden="true"></span>
+              <span>{t.legendMa}</span>
+            </span>
+            <span class="swatch ahr">
+              <span class="bar" aria-hidden="true"></span>
+              <span>{t.legendAhr}</span>
+            </span>
+            <span class="swatch floor dashed">
+              <span class="bar" aria-hidden="true"></span>
+              <span>{t.legendFloor}</span>
+            </span>
+            <span class="swatch dca dashed">
+              <span class="bar" aria-hidden="true"></span>
+              <span>{t.legendDca}</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- DATA TABLE (30 days) -->
+      <section id="data" class="section">
+        <header class="section-head">
+          <div>
+            <div class="eyebrow">
+              <span class="label-dot"></span>
+              <span>{t.dataEyebrow}</span>
+            </div>
+            <h2 class="section-title">{t.dataTitle}</h2>
+          </div>
+          <div>
+            <a href={datasetJsonUrl} class="btn-ghost" download>
+              <span>{t.dataCtaHistory(rowCount.toLocaleString())}</span>
+              <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </header>
+
+        <div class="table-wrap">
+          <table class="data-table" aria-label={t.dataEyebrow}>
+            <thead>
+              <tr>
+                <th scope="col">{t.colDate}</th>
+                <th scope="col" class="num">{t.colClose}</th>
+                <th scope="col" class="num hide-sm">{t.colMa}</th>
+                <th scope="col" class="num">{t.colAhr}</th>
+                <th scope="col" class="num hide-sm">{t.colQ}</th>
+                <th scope="col">{t.colRegime}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                recent30.map((row) => {
+                  const rowTier = tierFor(row.ahr999);
+                  return (
+                    <tr>
+                      <td class="date">{row.date}</td>
+                      <td class="num">{fmtUsd(row.close)}</td>
+                      <td class="num hide-sm">{fmtUsd(row.ma200)}</td>
+                      <td class="num strong">{fmtAhr(row.ahr999)}</td>
+                      <td class="num hide-sm">{fmtPct(row.quantile5y)}</td>
+                      <td>
+                        <span class={`regime ${rowTier.cls}`}>
+                          <span class="regime-dot" aria-hidden="true"></span>
+                          {rowTier.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CODE ONE-LINER -->
+      <section class="section section-slim">
+        <div class="section-head" style="margin-bottom: 1.5rem;">
+          <div>
+            <div class="eyebrow">
+              <span class="label-dot"></span>
+              <span>{t.codeEyebrow}</span>
+            </div>
+            <h2
+              class="section-title"
+              style="font-size: clamp(1.5rem, 2.8vw, 2.1rem);"
+            >
+              {t.codeTitle}
+            </h2>
+          </div>
+        </div>
+
+        <div class="code-card" id="copy-card">
+          <div class="code-label">
+            <span class="lhs">
+              <span class="traffic" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </span>
+              <span>{t.codeLabel}</span>
+            </span>
+            <span
+              class="copy-hint"
+              data-copy={t.codeCopy}
+              data-copied={t.codeCopied}>{t.codeCopy}</span
+            >
+          </div>
+          <pre
+            class="code-block"
+            id="copy-src"
+            data-copy={copyCommand}
+          ><code><span class="prompt" aria-hidden="true">$ </span>curl <span class="flag">-s</span> <span class="url">{datasetJsonAbsoluteUrl}</span> | jq <span class="str">'.[-1]'</span></code></pre>
+        </div>
+      </section>
+
+      <!-- ABOUT AHR999 -->
+      <section class="about-section">
+        <div class="about-header">
+          <div class="eyebrow">
+            <span class="label-dot"></span>
+            <span>{t.aboutEyebrow}</span>
+          </div>
+          <h2 class="about-title" set:html={t.aboutTitleHtml}></h2>
+        </div>
+        <div class="about-body">
+          <p set:html={t.aboutBody1Html}></p>
+          <p set:html={t.aboutBody2Html}></p>
+        </div>
+
+        <div class="regime-grid">
+          <div class="regime-card tier-bargain">
+            <span class="label-row">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="label">{t.regimeLabels.bargain}</span>
+            </span>
+            <span class="range">&lt; 0.45</span>
+          </div>
+          <div class="regime-card tier-dca">
+            <span class="label-row">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="label">{t.regimeLabels.dca}</span>
+            </span>
+            <span class="range">0.45 – 1.20</span>
+          </div>
+          <div class="regime-card tier-caution">
+            <span class="label-row">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="label">{t.regimeLabels.caution}</span>
+            </span>
+            <span class="range">1.20 – 3.00</span>
+          </div>
+          <div class="regime-card tier-bubble">
+            <span class="label-row">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="label">{t.regimeLabels.bubble}</span>
+            </span>
+            <span class="range">&gt; 3.00</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-strip">
+        <span class="footer-brand">
+          <span class="brand-mark">◐</span>
+          <span class="brand-name">ahr999</span>
+          <span class="brand-slash">/</span>
+          <span class="brand-sub">dataset</span>
+        </span>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <span>© {currentYear}</span>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <span>{t.footerLicense}</span>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <span>{t.footerUpdated(latestDate, rowCount.toLocaleString())}</span>
+        <a
+          href="https://github.com/RuochenLyu/ahr999-dataset"
+          target="_blank"
+          rel="noopener"
+          class="footer-github">GitHub ↗</a
+        >
+      </div>
+    </footer>
+
+    <script>
+      import * as echarts from 'echarts';
+
+      type Row = {
+        date: string;
+        close: number;
+        ma200: number | null;
+        ahr999: number | null;
+        quantile5y: number | null;
+        windowKind: string;
+      };
+
+      const COLOR_PRICE = '#f59e0b';
+      const COLOR_MA200 = '#94a3b8';
+      const COLOR_AHR = '#60a5fa';
+      const COLOR_FLOOR = '#f87171';
+      const COLOR_DCA = '#34d399';
+      const COLOR_AXIS = '#27272a';
+      const COLOR_GRID = 'rgba(63, 63, 70, 0.35)';
+      const COLOR_FG = '#fafafa';
+      const COLOR_FG_MUTED = '#a1a1aa';
+      const COLOR_FG_DIM = '#71717a';
+
+      const el = document.getElementById('chart') as HTMLDivElement | null;
+      if (!el) {
+        throw new Error('chart container not found');
+      }
+
+      const chartLang = el.dataset.lang === 'zh' ? 'zh' : 'en';
+      const ct =
+        chartLang === 'zh'
+          ? {
+              loading: '加载中…',
+              price: 'BTC 价格',
+              ma: '200 日均价',
+              ahr: 'ahr999',
+              floor: '抄底',
+              dca: '定投',
+            }
+          : {
+              loading: 'loading',
+              price: 'BTC price',
+              ma: '200d DCA cost',
+              ahr: 'ahr999',
+              floor: 'Bargain',
+              dca: 'DCA',
+            };
+
+      const chart = echarts.init(el, null, { renderer: 'canvas' });
+      chart.showLoading({
+        text: ct.loading,
+        color: COLOR_AHR,
+        textColor: COLOR_FG_MUTED,
+        maskColor: 'transparent',
+        fontSize: 12,
+      });
+
+      function formatUsd(v: number | null | undefined): string {
+        if (v === null || v === undefined || Number.isNaN(v)) return '—';
+        return `$${v.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
+      }
+      function formatAhr(v: number | null | undefined): string {
+        if (v === null || v === undefined || Number.isNaN(v)) return '—';
+        return v.toFixed(4);
+      }
+      function formatDate(v: string): string {
+        return (v || '').replaceAll('-', '/');
+      }
+
+      const tooltipFormatter = (params: any): string => {
+        if (!Array.isArray(params) || params.length === 0) return '';
+        const date = formatDate(params[0].axisValueLabel ?? '');
+        const byName: Record<string, number | null> = {};
+        for (const p of params) {
+          const v = Array.isArray(p.value) ? p.value[1] : p.value;
+          byName[p.seriesName] =
+            v === null || v === undefined || Number.isNaN(v) ? null : v;
+        }
+
+        const rows: Array<{
+          swatch: string;
+          color: string;
+          label: string;
+          value: string;
+        }> = [
+          {
+            swatch: 'ahr-swatch',
+            color: COLOR_PRICE,
+            label: ct.price,
+            value: formatUsd(byName['BTC price']),
+          },
+          {
+            swatch: 'ahr-swatch ahr-swatch--hollow',
+            color: COLOR_MA200,
+            label: ct.ma,
+            value: formatUsd(byName['MA200']),
+          },
+          {
+            swatch: 'ahr-swatch',
+            color: COLOR_AHR,
+            label: ct.ahr,
+            value: formatAhr(byName['AHR999']),
+          },
+          {
+            swatch: 'ahr-swatch ahr-swatch--dashed',
+            color: COLOR_FLOOR,
+            label: ct.floor,
+            value: '0.45',
+          },
+          {
+            swatch: 'ahr-swatch ahr-swatch--dashed',
+            color: COLOR_DCA,
+            label: ct.dca,
+            value: '1.20',
+          },
+        ];
+
+        const rowHtml = rows
+          .map(
+            (r) =>
+              `<tr><td><span class="${r.swatch}" style="background:${r.color};color:${r.color}"></span>${r.label}</td><td>${r.value}</td></tr>`,
+          )
+          .join('');
+
+        return `<div class="ahr-tooltip"><div class="ahr-tt-date">${date}</div><table>${rowHtml}</table></div>`;
+      };
+
+      async function loadAndRender(): Promise<void> {
+        const url = el?.dataset.datasetUrl ?? 'datasets/ahr999.json';
+        const res = await fetch(url, { cache: 'no-cache' });
+        if (!res.ok) {
+          throw new Error(`dataset fetch failed: ${res.status}`);
+        }
+        const rows = (await res.json()) as Row[];
+        chart.hideLoading();
+
+        const dates = rows.map((r) => r.date);
+        const closeSeries = rows.map((r) => r.close);
+        const ma200Series = rows.map((r) => r.ma200);
+        const ahrSeries = rows.map((r) => r.ahr999);
+
+        const TWO_YEARS_DAYS = 365 * 2;
+        const defaultStartPercent =
+          dates.length > TWO_YEARS_DAYS
+            ? 100 - (TWO_YEARS_DAYS / dates.length) * 100
+            : 0;
+
+        const option: echarts.EChartsOption = {
+          backgroundColor: 'transparent',
+          textStyle: { color: COLOR_FG, fontFamily: 'inherit' },
+          animation: false,
+          grid: { left: 72, right: 56, top: 38, bottom: 70 },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'cross',
+              lineStyle: {
+                color: COLOR_FG_DIM,
+                width: 1,
+                type: 'dashed',
+                opacity: 0.8,
+              },
+              crossStyle: { color: COLOR_FG_DIM },
+              label: {
+                backgroundColor: '#0c0c0f',
+                borderColor: COLOR_AXIS,
+                borderWidth: 1,
+                color: COLOR_FG_MUTED,
+                fontFamily:
+                  'JetBrains Mono, ui-monospace, SF Mono, Menlo, monospace',
+                fontSize: 10,
+              },
+            },
+            backgroundColor: 'transparent',
+            borderWidth: 0,
+            padding: 0,
+            extraCssText: 'box-shadow: none; pointer-events:none;',
+            formatter: tooltipFormatter,
+          },
+          xAxis: {
+            type: 'category',
+            data: dates,
+            boundaryGap: false,
+            axisLine: { lineStyle: { color: COLOR_AXIS } },
+            axisTick: { show: false },
+            axisLabel: {
+              color: COLOR_FG_DIM,
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              formatter: (value: string) =>
+                value.length >= 7 ? value.slice(0, 7) : value,
+              hideOverlap: true,
+            },
+            splitLine: { show: false },
+          },
+          yAxis: [
+            {
+              type: 'log',
+              position: 'left',
+              axisLine: { show: false },
+              axisTick: { show: false },
+              axisLabel: {
+                color: COLOR_FG_DIM,
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                formatter: (value: number): string =>
+                  value >= 1000
+                    ? `$${(value / 1000).toFixed(0)}k`
+                    : `$${value}`,
+              },
+              splitLine: {
+                lineStyle: { color: COLOR_GRID, type: 'dashed' },
+              },
+            },
+            {
+              type: 'value',
+              position: 'right',
+              min: 0,
+              axisLine: { show: false },
+              axisTick: { show: false },
+              axisLabel: {
+                color: COLOR_FG_DIM,
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                formatter: (value: number): string => value.toFixed(1),
+              },
+              splitLine: { show: false },
+            },
+          ],
+          dataZoom: [
+            {
+              type: 'slider',
+              start: defaultStartPercent,
+              end: 100,
+              height: 20,
+              bottom: 18,
+              borderColor: 'transparent',
+              backgroundColor: 'rgba(255,255,255,0.012)',
+              fillerColor: 'rgba(245, 158, 11, 0.14)',
+              handleStyle: {
+                color: COLOR_PRICE,
+                borderColor: COLOR_PRICE,
+                borderWidth: 1,
+              },
+              moveHandleStyle: { color: COLOR_PRICE, opacity: 0.7 },
+              dataBackground: {
+                lineStyle: { color: COLOR_MA200, opacity: 0.4 },
+                areaStyle: { color: COLOR_MA200, opacity: 0.08 },
+              },
+              selectedDataBackground: {
+                lineStyle: { color: COLOR_PRICE, opacity: 0.8 },
+                areaStyle: { color: COLOR_PRICE, opacity: 0.14 },
+              },
+              textStyle: {
+                color: COLOR_FG_DIM,
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+              },
+              brushSelect: false,
+            },
+          ],
+          series: [
+            {
+              name: 'MA200',
+              type: 'line',
+              yAxisIndex: 0,
+              data: ma200Series,
+              showSymbol: false,
+              sampling: 'lttb',
+              lineStyle: { color: COLOR_MA200, width: 1.2, opacity: 0.7 },
+              itemStyle: { color: COLOR_MA200 },
+              z: 1,
+            },
+            {
+              name: 'BTC price',
+              type: 'line',
+              yAxisIndex: 0,
+              data: closeSeries,
+              showSymbol: false,
+              sampling: 'lttb',
+              lineStyle: { color: COLOR_PRICE, width: 1.6 },
+              itemStyle: { color: COLOR_PRICE },
+              z: 2,
+            },
+            {
+              name: 'AHR999',
+              type: 'line',
+              yAxisIndex: 1,
+              data: ahrSeries,
+              showSymbol: false,
+              sampling: 'lttb',
+              lineStyle: { color: COLOR_AHR, width: 1.4 },
+              itemStyle: { color: COLOR_AHR },
+              z: 3,
+              markLine: {
+                silent: true,
+                symbol: 'none',
+                label: {
+                  position: 'insideEndTop',
+                  color: COLOR_FG_DIM,
+                  fontSize: 10,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  padding: [2, 4, 0, 4],
+                },
+                data: [
+                  {
+                    yAxis: 0.45,
+                    lineStyle: {
+                      color: COLOR_FLOOR,
+                      type: 'dashed',
+                      width: 1,
+                      opacity: 0.8,
+                    },
+                    label: {
+                      formatter: `${ct.floor} · 0.45`,
+                      color: COLOR_FLOOR,
+                    },
+                  },
+                  {
+                    yAxis: 1.2,
+                    lineStyle: {
+                      color: COLOR_DCA,
+                      type: 'dashed',
+                      width: 1,
+                      opacity: 0.8,
+                    },
+                    label: {
+                      formatter: `${ct.dca} · 1.20`,
+                      color: COLOR_DCA,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        };
+
+        chart.setOption(option);
+      }
+
+      window.addEventListener('resize', (): void => chart.resize());
+
+      loadAndRender().catch((error: unknown) => {
+        chart.hideLoading();
+        console.error(error);
+        const msg = error instanceof Error ? error.message : String(error);
+        if (el) {
+          el.innerHTML = `<div style="padding:2rem;color:#f87171;font-family:JetBrains Mono,monospace;font-size:12px">failed to load dataset: ${msg}</div>`;
+        }
+      });
+
+      // click-to-copy on code block — uses data-copy attr, never copies the $ prompt
+      const copyCard = document.getElementById('copy-card');
+      const copySrc = document.getElementById('copy-src');
+      if (copyCard && copySrc) {
+        copyCard.addEventListener('click', async () => {
+          try {
+            const text = (copySrc as HTMLElement).dataset.copy ?? '';
+            await navigator.clipboard.writeText(text);
+            copyCard.classList.add('copied');
+            const hint = copyCard.querySelector(
+              '.copy-hint',
+            ) as HTMLElement | null;
+            const copied = hint?.dataset.copied ?? 'copied';
+            const original = hint?.dataset.copy ?? 'click to copy';
+            if (hint) hint.textContent = copied;
+            setTimeout(() => {
+              copyCard.classList.remove('copied');
+              if (hint) hint.textContent = original;
+            }, 1600);
+          } catch {
+            /* clipboard blocked; no-op */
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

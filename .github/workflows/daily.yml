@@ -1,0 +1,83 @@
+name: Daily update & deploy
+
+on:
+  schedule:
+    # 02:17 UTC — shortly after UTC midnight so Binance has the previous UTC
+    # day's final bar. Off-the-hour minute to reduce fleet-wide collisions.
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/daily.yml'
+
+concurrency:
+  group: daily-and-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync dataset + export CSV
+        run: pnpm run update
+
+      - name: Verify dataset invariants
+        run: pnpm verify
+
+      - name: Commit dataset if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet datasets/; then
+            echo "No dataset changes."
+          else
+            git add datasets/
+            git commit -m "chore(data): update $(date -u -I)"
+            git push
+          fi
+
+      - name: Copy datasets into web/public
+        run: pnpm run web:prepublic
+
+      - name: Install web dependencies
+        run: pnpm --filter ./web install --frozen-lockfile
+
+      - name: Build Astro site
+        run: pnpm --filter ./web build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

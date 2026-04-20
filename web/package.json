@@ -1,0 +1,16 @@
+{
+  "name": "ahr999-dataset-web",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^4.16.0",
+    "echarts": "^5.5.1"
+  }
+}
