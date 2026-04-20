@@ -794,7 +794,7 @@ a:hover {
   );
   height: 1.5px;
 }
-.chart-legend .swatch span {
+.chart-legend .swatch > span:not(.bar) {
   color: var(--fg-muted);
 }
 .chart-legend .swatch.price { color: var(--amber); }
