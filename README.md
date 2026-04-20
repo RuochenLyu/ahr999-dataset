@@ -57,6 +57,22 @@ pnpm web:dev         # local preview on http://localhost:4321/
 
 Zero API key. Zero paid dependencies. Just Node ≥ 22 and pnpm.
 
+### Binance endpoint
+
+By default we pull klines from `https://data-api.binance.vision`
+(Binance's public market-data mirror intended for analytics /
+backtesting — same payload shape as `api.binance.com`, no API key, no
+geo fence). We switched to this because `api.binance.com` returns
+**HTTP 451** on GitHub-hosted Actions runners and some other cloud IP
+ranges.
+
+If you prefer the canonical endpoint (your IP reaches it without 451),
+override via env:
+
+```bash
+AHR999_BINANCE_API_BASE_URL=https://api.binance.com pnpm sync
+```
+
 ## Data schema
 
 `datasets/ahr999.json` is an array, oldest first. Each row:

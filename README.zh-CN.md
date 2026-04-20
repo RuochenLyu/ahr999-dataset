@@ -55,6 +55,20 @@ pnpm web:dev         # 本地预览 http://localhost:4321/
 
 无需任何 API key，无付费依赖。Node ≥ 22 + pnpm 即可。
 
+### Binance 端点
+
+默认走 `https://data-api.binance.vision`（Binance 官方数据镜像端点，
+面向分析/回测场景，payload 与 `api.binance.com` 完全一致，无需 API
+key、无地理限制）。换这个是因为 `api.binance.com` 在部分 IP 段会返回
+**HTTP 451**（GitHub Actions runner、部分云厂商 IP 都会中招）。
+
+如果你本地可以直接访问 `api.binance.com`，想走原地址，用环境变量
+覆盖即可：
+
+```bash
+AHR999_BINANCE_API_BASE_URL=https://api.binance.com pnpm sync
+```
+
 ## 数据字段
 
 `datasets/ahr999.json` 是按日期升序的数组，每行：
