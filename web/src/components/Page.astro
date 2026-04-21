@@ -726,14 +726,29 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
         return (v || '').replaceAll('-', '/');
       }
 
-      const tooltipFormatter = (params: any): string => {
+      type TooltipParam = {
+        axisValueLabel?: unknown;
+        seriesName?: unknown;
+        value?: unknown;
+      };
+
+      function isTooltipParam(value: unknown): value is TooltipParam {
+        return typeof value === 'object' && value !== null;
+      }
+
+      function tooltipValue(value: unknown): number | null {
+        const raw = Array.isArray(value) ? value[1] : value;
+        return typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
+      }
+
+      const tooltipFormatter = (params: unknown): string => {
         if (!Array.isArray(params) || params.length === 0) return '';
-        const date = formatDate(params[0].axisValueLabel ?? '');
+        const first = params.find(isTooltipParam);
+        const date = formatDate(String(first?.axisValueLabel ?? ''));
         const byName: Record<string, number | null> = {};
         for (const p of params) {
-          const v = Array.isArray(p.value) ? p.value[1] : p.value;
-          byName[p.seriesName] =
-            v === null || v === undefined || Number.isNaN(v) ? null : v;
+          if (!isTooltipParam(p) || typeof p.seriesName !== 'string') continue;
+          byName[p.seriesName] = tooltipValue(p.value);
         }
 
         const rows: Array<{
