@@ -233,12 +233,10 @@ const deltaCls =
   deltaAhr === null ? '' : deltaAhr >= 0 ? 'delta-up' : 'delta-down';
 
 const jsonSizeKb = Math.round(
-  fs.statSync(new URL('../../public/datasets/ahr999.json', import.meta.url)).size /
-    1024,
+  fs.statSync('public/datasets/ahr999.json').size / 1024,
 );
 const csvSizeKb = Math.round(
-  fs.statSync(new URL('../../public/datasets/ahr999.csv', import.meta.url)).size /
-    1024,
+  fs.statSync('public/datasets/ahr999.csv').size / 1024,
 );
 
 const altLangHref = isEn ? `${base}/zh/` : `${base}/`;
