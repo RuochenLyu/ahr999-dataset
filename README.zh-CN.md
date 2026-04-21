@@ -4,6 +4,8 @@
 
 [English](./README.md) · [简体中文](./README.zh-CN.md)
 
+[![dataset: JSON](https://img.shields.io/badge/dataset-JSON-f59e0b.svg)](./datasets/ahr999.json)
+[![dataset: CSV](https://img.shields.io/badge/dataset-CSV-f59e0b.svg)](./datasets/ahr999.csv)
 [![daily update](https://github.com/RuochenLyu/ahr999-dataset/actions/workflows/daily.yml/badge.svg)](https://github.com/RuochenLyu/ahr999-dataset/actions/workflows/daily.yml)
 [![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](./LICENSE)
 [![data: CC BY 4.0](https://img.shields.io/badge/data-CC_BY_4.0-lightgrey.svg)](./DATA_LICENSE)
@@ -13,6 +15,14 @@
 AHR999（囤币指标）由九神提出，是基于 BTC 价格的启发式定投信号。本仓库发布
 可复现、每日自动更新的自算版本数据集，第三方可直接引用，无需爬非权威站点，
 也无需付费 API。
+
+## 数据下载
+
+- **JSON** · [`datasets/ahr999.json`](./datasets/ahr999.json) · [CDN 镜像](https://ahr999.aix4u.com/datasets/ahr999.json)
+- **CSV** · [`datasets/ahr999.csv`](./datasets/ahr999.csv) · [CDN 镜像](https://ahr999.aix4u.com/datasets/ahr999.csv)
+
+全量数据（~3100+ 行，按日期升序），每日 UTC 00:37（北京时间 08:37）自动更新。
+字段定义见下方[数据字段](#数据字段)。
 
 ## 快速使用
 
@@ -87,7 +97,7 @@ AHR999_BINANCE_API_BASE_URL=https://api.binance.com pnpm sync
 
 ## 每日更新机制
 
-单一 GitHub Actions workflow（`.github/workflows/daily.yml`）每天 UTC 02:17 跑：
+单一 GitHub Actions workflow（`.github/workflows/daily.yml`）每天 UTC 00:37 跑：
 
 1. 抓取缺失的 Binance 日 K（带 5 天回溯，覆盖可能的后置修正）
 2. 全量重算（~3100 行，<50 ms）——便宜，窗口簿记零脑力

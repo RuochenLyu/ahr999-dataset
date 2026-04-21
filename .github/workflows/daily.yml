@@ -2,9 +2,9 @@ name: Daily update & deploy
 
 on:
   schedule:
-    # 02:17 UTC — shortly after UTC midnight so Binance has the previous UTC
-    # day's final bar. Off-the-hour minute to reduce fleet-wide collisions.
-    - cron: '17 2 * * *'
+    # 00:37 UTC — 37 min after Binance closes the previous UTC day bar.
+    # Off-the-hour minute to avoid queue contention near UTC midnight.
+    - cron: '37 0 * * *'
   workflow_dispatch:
   push:
     branches: [main]

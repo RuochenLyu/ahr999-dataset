@@ -35,11 +35,11 @@ const t = isEn
       metaDesc:
         'Open, daily-updated AHR999 (BTC hoarding index) dataset. Self-computed from Binance BTCUSDT daily closes. Free JSON/CSV downloads.',
 
-      liveLabel: (date: string) => `Live · UTC ${date}`,
-      liveTitle: 'Automated daily update at 02:17 UTC',
+      liveLabel: (date: string) => `Updated · UTC ${date}`,
+      liveTitle: 'Automated daily update at 00:37 UTC',
       langAria: 'Switch to Chinese',
 
-      heroEyebrow: "AHR999 — today's reading",
+      heroEyebrow: 'AHR999 — latest reading',
       heroUtc: (d: string) => `UTC ${d}`,
       tiers: {
         na: { label: 'n/a', hint: '—' },
@@ -106,10 +106,10 @@ const t = isEn
         '开源、每日自动更新的 AHR999（BTC 囤币指标）数据集，基于 Binance BTCUSDT 日 K 自算。JSON / CSV 免费下载。',
 
       liveLabel: (date: string) => `更新于 UTC ${date}`,
-      liveTitle: '每日 UTC 02:17 自动更新',
+      liveTitle: '每日 UTC 00:37 自动更新',
       langAria: '切换到英文',
 
-      heroEyebrow: 'AHR999 · 今日数值',
+      heroEyebrow: 'AHR999 · 最新数值',
       heroUtc: (d: string) => `UTC ${d}`,
       tiers: {
         na: { label: '暂无', hint: '—' },
@@ -139,7 +139,7 @@ const t = isEn
       legendDca: '定投 · 1.20',
 
       dataEyebrow: '最近 30 日',
-      dataTitle: '每日 UTC 收盘。',
+      dataTitle: '逐日 UTC 收盘价。',
       dataCtaHistory: (n: string) => `查看全部 ${n} 行`,
       colDate: '日期',
       colClose: '收盘价',
@@ -251,7 +251,10 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
 <html lang={isEn ? 'en' : 'zh-Hans'}>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
     <title>{socialTitle}</title>
     <meta name="description" content={t.metaDesc} />
     <meta name="color-scheme" content="dark" />
@@ -783,15 +786,15 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
         return `<div class="ahr-tooltip"><div class="ahr-tt-date">${date}</div><table>${rowHtml}</table></div>`;
       };
 
-      async function loadAndRender(): Promise<void> {
-        const url = el?.dataset.datasetUrl ?? 'datasets/ahr999.json';
-        const res = await fetch(url, { cache: 'no-cache' });
-        if (!res.ok) {
-          throw new Error(`dataset fetch failed: ${res.status}`);
-        }
-        const rows = (await res.json()) as Row[];
-        chart.hideLoading();
+      // window.innerWidth is always defined; el.clientWidth can be 0 on
+      // Safari first paint before the stylesheet applies.
+      // Match the CSS breakpoint in global.css so layout and chart config stay
+      // in sync at the exact edge.
+      const narrowQuery = '(max-width: 560px)';
+      const isNarrowNow = (): boolean =>
+        window.matchMedia(narrowQuery).matches;
 
+      function buildOption(rows: Row[], narrow: boolean): ChartOption {
         const dates = rows.map((r) => r.date);
         const closeSeries = rows.map((r) => r.close);
         const ma200Series = rows.map((r) => r.ma200);
@@ -803,11 +806,13 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
             ? 100 - (TWO_YEARS_DAYS / dates.length) * 100
             : 0;
 
-        const option: ChartOption = {
+        return {
           backgroundColor: 'transparent',
           textStyle: { color: COLOR_FG, fontFamily: 'inherit' },
           animation: false,
-          grid: { left: 72, right: 56, top: 38, bottom: 70 },
+          grid: narrow
+            ? { left: 8, right: 8, top: 28, bottom: 64 }
+            : { left: 72, right: 56, top: 38, bottom: 70 },
           tooltip: {
             trigger: 'axis',
             axisPointer: {
@@ -834,6 +839,18 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
             padding: 0,
             extraCssText: 'box-shadow: none; pointer-events:none;',
             formatter: tooltipFormatter,
+            confine: true,
+            position: narrow
+              ? (_pt: unknown, _params: unknown, _dom: unknown, _rect: unknown, size: { viewSize: [number, number]; contentSize: [number, number] }) => {
+                  // pin to the top; flip left/right to avoid the finger
+                  const [viewW] = size.viewSize;
+                  const [contentW] = size.contentSize;
+                  const point = _pt as [number, number];
+                  const onLeftHalf = point[0] < viewW / 2;
+                  const left = onLeftHalf ? viewW - contentW - 8 : 8;
+                  return [left, 4];
+                }
+              : undefined,
           },
           xAxis: {
             type: 'category',
@@ -858,13 +875,18 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
               axisLine: { show: false },
               axisTick: { show: false },
               axisLabel: {
+                inside: narrow,
+                margin: narrow ? 4 : 8,
+                verticalAlign: narrow ? 'bottom' : 'middle',
                 color: COLOR_FG_DIM,
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 10,
-                formatter: (value: number): string =>
-                  value >= 1000
-                    ? `$${(value / 1000).toFixed(0)}k`
-                    : `$${value}`,
+                formatter: (value: number): string => {
+                  if (value >= 1_000_000)
+                    return `$${(value / 1_000_000).toFixed(0)}M`;
+                  if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`;
+                  return `$${value}`;
+                },
               },
               splitLine: {
                 lineStyle: { color: COLOR_GRID, type: 'dashed' },
@@ -877,6 +899,9 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
               axisLine: { show: false },
               axisTick: { show: false },
               axisLabel: {
+                inside: narrow,
+                margin: narrow ? 4 : 8,
+                verticalAlign: narrow ? 'bottom' : 'middle',
                 color: COLOR_FG_DIM,
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: 10,
@@ -992,11 +1017,37 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
             },
           ],
         };
-
-        chart.setOption(option);
       }
 
-      window.addEventListener('resize', (): void => chart.resize());
+      let cachedRows: Row[] | null = null;
+      let lastNarrow = isNarrowNow();
+
+      async function loadAndRender(): Promise<void> {
+        const url = el?.dataset.datasetUrl ?? 'datasets/ahr999.json';
+        const res = await fetch(url, { cache: 'no-cache' });
+        if (!res.ok) {
+          throw new Error(`dataset fetch failed: ${res.status}`);
+        }
+        const rows = (await res.json()) as Row[];
+        chart.hideLoading();
+        cachedRows = rows;
+        chart.setOption(buildOption(rows, lastNarrow));
+      }
+
+      // Safari first-paint guard: module scripts can execute before the
+      // stylesheet applies, leaving the container at 0x0 on init. The
+      // ResizeObserver catches the first valid size, replaces the window
+      // resize listener, and rebuilds the option when the 560px breakpoint
+      // flips (portrait<->landscape, desktop window drag).
+      const ro = new ResizeObserver(() => {
+        chart.resize();
+        const narrow = isNarrowNow();
+        if (narrow !== lastNarrow && cachedRows) {
+          lastNarrow = narrow;
+          chart.setOption(buildOption(cachedRows, narrow), true);
+        }
+      });
+      ro.observe(el);
 
       loadAndRender().catch((error: unknown) => {
         chart.hideLoading();

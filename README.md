@@ -4,6 +4,8 @@
 
 [English](./README.md) · [简体中文](./README.zh-CN.md)
 
+[![dataset: JSON](https://img.shields.io/badge/dataset-JSON-f59e0b.svg)](./datasets/ahr999.json)
+[![dataset: CSV](https://img.shields.io/badge/dataset-CSV-f59e0b.svg)](./datasets/ahr999.csv)
 [![daily update](https://github.com/RuochenLyu/ahr999-dataset/actions/workflows/daily.yml/badge.svg)](https://github.com/RuochenLyu/ahr999-dataset/actions/workflows/daily.yml)
 [![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](./LICENSE)
 [![data: CC BY 4.0](https://img.shields.io/badge/data-CC_BY_4.0-lightgrey.svg)](./DATA_LICENSE)
@@ -15,6 +17,14 @@ averaging signal originally proposed by the Chinese investor "九神". This
 repository publishes a self-computed, reproducible, daily-refreshed dataset
 so third parties can reference AHR999 without scraping ad-hoc dashboards or
 paying for proprietary APIs.
+
+## Download
+
+- **JSON** · [`datasets/ahr999.json`](./datasets/ahr999.json) · [CDN mirror](https://ahr999.aix4u.com/datasets/ahr999.json)
+- **CSV** · [`datasets/ahr999.csv`](./datasets/ahr999.csv) · [CDN mirror](https://ahr999.aix4u.com/datasets/ahr999.csv)
+
+Full series (~3,100+ rows, oldest first), refreshed daily at 00:37 UTC. See
+[Data schema](#data-schema) below for field definitions.
 
 ## Quick usage
 
@@ -93,7 +103,7 @@ discussion of deviations from the original 九神 formulation.
 ## How daily updates work
 
 A single GitHub Actions workflow (`.github/workflows/daily.yml`) runs at
-02:17 UTC every day:
+00:37 UTC every day:
 
 1. Fetch missing Binance daily closes (with a 5-day self-heal lookback to
    absorb late corrections).
