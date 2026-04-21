@@ -251,11 +251,13 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
     <title>{socialTitle}</title>
     <meta name="description" content={t.metaDesc} />
+    <meta name="theme-color" content="#09090b" />
     <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="canonical" href={pageUrl} />
     <meta property="og:title" content={socialTitle} />
     <meta property="og:description" content={t.metaDesc} />
@@ -288,10 +290,12 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
     />
   </head>
   <body>
-    <div class="bg-grid" aria-hidden="true"></div>
-    <div class="bg-scan" aria-hidden="true"></div>
-    <div class="bg-glow" aria-hidden="true"></div>
-    <div class="bg-glow-alt" aria-hidden="true"></div>
+    <div class="page-bg" aria-hidden="true">
+      <div class="bg-grid"></div>
+      <div class="bg-scan"></div>
+      <div class="bg-glow"></div>
+      <div class="bg-glow-alt"></div>
+    </div>
 
     <!-- HEADER -->
     <header class="site-header">
