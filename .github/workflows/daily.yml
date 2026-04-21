@@ -28,6 +28,7 @@ permissions:
 jobs:
   update-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -45,12 +46,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync dataset + export CSV
+        if: github.event_name != 'push'
         run: pnpm run update
 
       - name: Verify dataset invariants
         run: pnpm verify
 
       - name: Commit dataset if changed
+        if: github.event_name != 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
