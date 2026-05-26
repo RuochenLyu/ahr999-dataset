@@ -1,0 +1,45 @@
+# AHR999 Dataset
+
+> Open, daily-updated AHR999 BTC hoarding index dataset, published as JSON and CSV.
+
+## Canonical Site
+
+- Homepage: https://ahr999.aix4u.com/
+- Chinese homepage: https://ahr999.aix4u.com/zh/
+- Repository: https://github.com/RuochenLyu/ahr999-dataset
+
+## Data Endpoints
+
+- JSON dataset: https://ahr999.aix4u.com/datasets/ahr999.json
+- CSV dataset: https://ahr999.aix4u.com/datasets/ahr999.csv
+- OpenAPI description: https://ahr999.aix4u.com/openapi.json
+
+## Dataset Shape
+
+Each JSON row is one UTC calendar day, ordered oldest first. Fields:
+
+- `date`: UTC date in `YYYY-MM-DD`.
+- `close`: BTCUSDT daily close from Binance public market data.
+- `ma200`: 200-day simple moving average of `close`, or `null` until available.
+- `ahr999`: `(close / ma200) * (close / fitted)`, or `null` until available.
+- `quantile5y`: empirical rank of `ahr999` in the active recent window, or `null` until enough observations exist.
+- `windowKind`: `insufficient_samples`, `expanding`, or `rolling_5y`.
+
+## Recommended Agent Tasks
+
+- Fetch the latest row with `GET /datasets/ahr999.json` and read the last array item.
+- Load a historical range by filtering rows by `date`.
+- Explain the field meanings and calculation method.
+- Cite the dataset and license when using or redistributing values.
+
+## Boundaries
+
+- This site is a public read-only dataset and dashboard.
+- No authentication, OAuth, user accounts, trading, brokerage, payment, or portfolio actions are offered.
+- AHR999 is a heuristic indicator for research, education, and observability. It is not financial advice and does not predict future returns.
+
+## Attribution
+
+Data files are licensed under CC BY 4.0. Cite:
+
+`ahr999-dataset contributors (2026). "ahr999-dataset - open BTC hoarding index computed from Binance BTCUSDT daily closes". https://github.com/RuochenLyu/ahr999-dataset`

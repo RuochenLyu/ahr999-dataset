@@ -1,0 +1,50 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://ahr999.aix4u.com/datasets/ahr999.json",
+      "service-desc": [
+        {
+          "href": "https://ahr999.aix4u.com/openapi.json",
+          "type": "application/vnd.oai.openapi+json"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://github.com/RuochenLyu/ahr999-dataset#data"
+        },
+        {
+          "href": "https://ahr999.aix4u.com/llms.txt",
+          "type": "text/plain"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://ahr999.aix4u.com/datasets/ahr999.json"
+        }
+      ]
+    },
+    {
+      "anchor": "https://ahr999.aix4u.com/datasets/ahr999.csv",
+      "service-desc": [
+        {
+          "href": "https://ahr999.aix4u.com/openapi.json",
+          "type": "application/vnd.oai.openapi+json"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://github.com/RuochenLyu/ahr999-dataset#data"
+        },
+        {
+          "href": "https://ahr999.aix4u.com/llms.txt",
+          "type": "text/plain"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://ahr999.aix4u.com/datasets/ahr999.csv"
+        }
+      ]
+    }
+  ]
+}

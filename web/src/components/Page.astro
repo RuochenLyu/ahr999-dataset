@@ -204,31 +204,21 @@ function fmtDelta(v: number | null | undefined): string {
 }
 
 const tier = tierFor(latest?.ahr999 ?? null);
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const datasetJsonUrl = `${base}/datasets/ahr999.json`;
-const datasetCsvUrl = `${base}/datasets/ahr999.csv`;
-const datasetJsonAbsoluteUrl = new URL(
-  datasetJsonUrl,
-  import.meta.env.SITE,
-).toString();
-const datasetCsvAbsoluteUrl = new URL(
-  datasetCsvUrl,
-  import.meta.env.SITE,
-).toString();
-const siteHomeUrl = new URL(`${base}/`, import.meta.env.SITE).toString();
-const pageUrl = new URL(isEn ? `${base}/` : `${base}/zh/`, import.meta.env.SITE)
+const siteOrigin = 'https://ahr999.aix4u.com';
+const datasetJsonUrl = '/datasets/ahr999.json';
+const datasetCsvUrl = '/datasets/ahr999.csv';
+const datasetJsonAbsoluteUrl = new URL(datasetJsonUrl, siteOrigin).toString();
+const datasetCsvAbsoluteUrl = new URL(datasetCsvUrl, siteOrigin).toString();
+const siteHomeUrl = new URL('/', siteOrigin).toString();
+const enUrl = new URL('/', siteOrigin).toString();
+const zhUrl = new URL('/zh/', siteOrigin).toString();
+const pageUrl = isEn ? enUrl : zhUrl;
+const ogImageUrl = new URL('/og-image.png', siteOrigin).toString();
+const openApiUrl = new URL('/openapi.json', siteOrigin).toString();
+const apiCatalogUrl = new URL('/.well-known/api-catalog', siteOrigin)
   .toString();
-const ogImageUrl = new URL(`${base}/og-image.png`, import.meta.env.SITE)
-  .toString();
-const openApiUrl = new URL(`${base}/openapi.json`, import.meta.env.SITE)
-  .toString();
-const apiCatalogUrl = new URL(
-  `${base}/.well-known/api-catalog`,
-  import.meta.env.SITE,
-).toString();
-const llmsTxtUrl = new URL(`${base}/llms.txt`, import.meta.env.SITE).toString();
-const sitemapUrl = new URL(`${base}/sitemap.xml`, import.meta.env.SITE)
-  .toString();
+const llmsTxtUrl = new URL('/llms.txt', siteOrigin).toString();
+const sitemapUrl = new URL('/sitemap.xml', siteOrigin).toString();
 const socialTitle = t.metaTitle(fmtAhr(latest?.ahr999 ?? null), tier.label);
 const ogImageAlt = isEn
   ? 'AHR999 open dataset brand card: daily open BTC accumulation index.'
@@ -253,7 +243,7 @@ const csvSizeKb = Math.round(
   fs.statSync('public/datasets/ahr999.csv').size / 1024,
 );
 
-const altLangHref = isEn ? `${base}/zh/` : `${base}/`;
+const altLangHref = isEn ? '/zh/' : '/';
 const altLangLabel = isEn ? '中' : 'EN';
 
 const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
@@ -353,7 +343,7 @@ const datasetStructuredData = JSON.stringify({
     <meta name="twitter:title" content={socialTitle} />
     <meta name="twitter:description" content={t.metaDesc} />
     <meta name="twitter:image" content={ogImageUrl} />
-    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" type="application/xml" href={sitemapUrl} />
     <link
       rel="service-desc"
@@ -379,8 +369,8 @@ const datasetStructuredData = JSON.stringify({
       title="LLMs guidance"
       href={llmsTxtUrl}
     />
-    <link rel="alternate" hreflang="en" href={`${base}/`} />
-    <link rel="alternate" hreflang="zh-Hans" href={`${base}/zh/`} />
+    <link rel="alternate" hreflang="en" href={enUrl} />
+    <link rel="alternate" hreflang="zh-Hans" href={zhUrl} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       rel="preconnect"
@@ -405,7 +395,7 @@ const datasetStructuredData = JSON.stringify({
 
     <!-- HEADER -->
     <header class="site-header">
-      <a class="brand" href={`${base}/`} aria-label="ahr999 dataset — home">
+      <a class="brand" href="/" aria-label="ahr999 dataset — home">
         <span class="brand-mark">◐</span>
         <span class="brand-name">ahr999</span>
         <span class="brand-slash">/</span>
