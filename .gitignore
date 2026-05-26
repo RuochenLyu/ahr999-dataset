@@ -7,6 +7,13 @@ web/.astro/
 
 # Generated at build time, not committed
 web/public/datasets/
+web/public/robots.txt
+web/public/llms.txt
+web/public/openapi.json
+web/public/sitemap.xml
+web/public/.well-known/api-catalog
+web/public/.well-known/agent-skills/index.json
+web/public/.well-known/agent-skills/ahr999-dataset/SKILL.md
 
 # Temp files from atomic writes
 *.tmp

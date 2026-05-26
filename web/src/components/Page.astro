@@ -211,9 +211,23 @@ const datasetJsonAbsoluteUrl = new URL(
   datasetJsonUrl,
   import.meta.env.SITE,
 ).toString();
+const datasetCsvAbsoluteUrl = new URL(
+  datasetCsvUrl,
+  import.meta.env.SITE,
+).toString();
+const siteHomeUrl = new URL(`${base}/`, import.meta.env.SITE).toString();
 const pageUrl = new URL(isEn ? `${base}/` : `${base}/zh/`, import.meta.env.SITE)
   .toString();
 const ogImageUrl = new URL(`${base}/og-image.png`, import.meta.env.SITE)
+  .toString();
+const openApiUrl = new URL(`${base}/openapi.json`, import.meta.env.SITE)
+  .toString();
+const apiCatalogUrl = new URL(
+  `${base}/.well-known/api-catalog`,
+  import.meta.env.SITE,
+).toString();
+const llmsTxtUrl = new URL(`${base}/llms.txt`, import.meta.env.SITE).toString();
+const sitemapUrl = new URL(`${base}/sitemap.xml`, import.meta.env.SITE)
   .toString();
 const socialTitle = t.metaTitle(fmtAhr(latest?.ahr999 ?? null), tier.label);
 const ogImageAlt = isEn
@@ -243,6 +257,72 @@ const altLangHref = isEn ? `${base}/zh/` : `${base}/`;
 const altLangLabel = isEn ? '中' : 'EN';
 
 const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
+const datasetStructuredData = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: 'AHR999 Dataset',
+  alternateName: [
+    'AHR999 hoarding index dataset',
+    'BTC hoarding index dataset',
+  ],
+  description:
+    'Open, daily-updated AHR999 BTC hoarding index dataset, self-computed from Binance BTCUSDT daily closes and published as JSON and CSV.',
+  url: siteHomeUrl,
+  inLanguage: ['en', 'zh-Hans'],
+  isAccessibleForFree: true,
+  license: 'https://creativecommons.org/licenses/by/4.0/',
+  creator: {
+    '@type': 'Organization',
+    name: 'ahr999-dataset contributors',
+    url: 'https://github.com/RuochenLyu/ahr999-dataset',
+  },
+  keywords: [
+    'AHR999',
+    'Bitcoin',
+    'BTC',
+    'BTCUSDT',
+    'dataset',
+    'CSV',
+    'JSON',
+    'dollar-cost averaging',
+  ],
+  dateModified: latestDate,
+  temporalCoverage: `${firstDate}/${latestDate}`,
+  version: latestDate,
+  measurementTechnique:
+    'AHR999 = (close / ma200) * (close / fitted), computed from Binance BTCUSDT daily closes.',
+  distribution: [
+    {
+      '@type': 'DataDownload',
+      name: 'AHR999 JSON dataset',
+      encodingFormat: 'application/json',
+      contentUrl: datasetJsonAbsoluteUrl,
+    },
+    {
+      '@type': 'DataDownload',
+      name: 'AHR999 CSV dataset',
+      encodingFormat: 'text/csv',
+      contentUrl: datasetCsvAbsoluteUrl,
+    },
+  ],
+  subjectOf: [
+    {
+      '@type': 'CreativeWork',
+      name: 'AHR999 Dataset OpenAPI description',
+      url: openApiUrl,
+    },
+    {
+      '@type': 'CreativeWork',
+      name: 'AHR999 Dataset API catalog',
+      url: apiCatalogUrl,
+    },
+    {
+      '@type': 'CreativeWork',
+      name: 'AHR999 Dataset agent guidance',
+      url: llmsTxtUrl,
+    },
+  ],
+});
 ---
 
 <!doctype html>
@@ -274,6 +354,31 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
     <meta name="twitter:description" content={t.metaDesc} />
     <meta name="twitter:image" content={ogImageUrl} />
     <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <link rel="sitemap" type="application/xml" href={sitemapUrl} />
+    <link
+      rel="service-desc"
+      type="application/vnd.oai.openapi+json"
+      href={openApiUrl}
+    />
+    <link rel="api-catalog" href={apiCatalogUrl} />
+    <link
+      rel="alternate"
+      type="application/json"
+      title="AHR999 JSON dataset"
+      href={datasetJsonAbsoluteUrl}
+    />
+    <link
+      rel="alternate"
+      type="text/csv"
+      title="AHR999 CSV dataset"
+      href={datasetCsvAbsoluteUrl}
+    />
+    <link
+      rel="alternate"
+      type="text/plain"
+      title="LLMs guidance"
+      href={llmsTxtUrl}
+    />
     <link rel="alternate" hreflang="en" href={`${base}/`} />
     <link rel="alternate" hreflang="zh-Hans" href={`${base}/zh/`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -288,6 +393,7 @@ const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
       href={datasetJsonUrl}
       crossorigin="anonymous"
     />
+    <script type="application/ld+json" set:html={datasetStructuredData}></script>
   </head>
   <body>
     <div class="page-bg" aria-hidden="true">

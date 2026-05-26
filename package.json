@@ -13,7 +13,7 @@
     "sync:backfill": "tsx scripts/sync.ts --backfill",
     "export:csv": "tsx scripts/export-csv.ts",
     "update": "pnpm sync && pnpm export:csv",
-    "web:prepublic": "tsx scripts/prepublic.ts",
+    "web:prepublic": "tsx scripts/prepublic.ts && tsx scripts/build-agent-metadata.ts",
     "web:dev": "pnpm web:prepublic && pnpm --filter ./web dev",
     "web:build": "pnpm web:prepublic && pnpm --filter ./web build",
     "web:preview": "pnpm --filter ./web preview",
