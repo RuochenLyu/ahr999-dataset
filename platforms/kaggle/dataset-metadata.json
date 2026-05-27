@@ -12,6 +12,9 @@
     "json"
   ],
   "description": "Open, daily-updated AHR999 BTC hoarding index dataset, self-computed from Binance BTCUSDT daily closes and published as CSV and JSON. This Kaggle dataset is a discovery mirror; the canonical source is https://ahr999.aix4u.com/ and https://github.com/RuochenLyu/ahr999-dataset. The canonical GitHub Actions pipeline refreshes data daily after the UTC BTCUSDT close is available, then mirrors the latest CSV and JSON files to Kaggle when mirror credentials are configured. This dataset is for research, education, and observability only. It is not financial advice.",
+  "expectedUpdateFrequency": "daily",
+  "userSpecifiedSources": "Source: Binance public BTCUSDT daily kline close prices. Processing: the canonical GitHub Actions pipeline in https://github.com/RuochenLyu/ahr999-dataset refreshes the dataset daily after the UTC daily close is available, computes the 200-day moving average, AHR999 value, and 5-year quantile window fields, then mirrors the latest CSV and JSON files to Kaggle. Canonical live dashboard and CDN endpoints: https://ahr999.aix4u.com/. Archival Zenodo snapshot: https://doi.org/10.5281/zenodo.20412604.",
+  "image": "dataset-cover-image.png",
   "resources": [
     {
       "path": "ahr999.csv",
@@ -20,31 +23,37 @@
         "fields": [
           {
             "name": "date",
+            "title": "UTC date in YYYY-MM-DD.",
             "description": "UTC date in YYYY-MM-DD.",
-            "type": "date"
+            "type": "datetime"
           },
           {
             "name": "close",
+            "title": "BTCUSDT daily close from Binance public market data.",
             "description": "BTCUSDT daily close from Binance public market data.",
-            "type": "number"
+            "type": "numeric"
           },
           {
             "name": "ma200",
+            "title": "200-day simple moving average of close, null until enough history exists.",
             "description": "200-day simple moving average of close, null until enough history exists.",
-            "type": "number"
+            "type": "numeric"
           },
           {
             "name": "ahr999",
+            "title": "(close / ma200) * (close / fitted), null when ma200 is null.",
             "description": "(close / ma200) * (close / fitted), null when ma200 is null.",
-            "type": "number"
+            "type": "numeric"
           },
           {
             "name": "quantile5y",
+            "title": "Empirical rank of ahr999 inside the active recent window.",
             "description": "Empirical rank of ahr999 inside the active recent window.",
-            "type": "number"
+            "type": "numeric"
           },
           {
             "name": "windowKind",
+            "title": "Window regime used for quantile5y: insufficient_samples, expanding, or rolling_5y.",
             "description": "Window regime used for quantile5y: insufficient_samples, expanding, or rolling_5y.",
             "type": "string"
           }
