@@ -9,11 +9,18 @@ tags:
 - cryptocurrency
 - finance
 - time-series
+- tabular
+- timeseries
 - csv
 - json
 pretty_name: AHR999 BTC Hoarding Index Dataset
 size_categories:
 - n<10K
+configs:
+- config_name: default
+  data_files:
+  - split: train
+    path: ahr999.csv
 ---
 
 # AHR999 BTC Hoarding Index Dataset
@@ -27,6 +34,8 @@ This Hugging Face repository is a mirror. The canonical dataset endpoints are:
 - GitHub: https://github.com/RuochenLyu/ahr999-dataset
 - CSV endpoint: https://ahr999.aix4u.com/datasets/ahr999.csv
 - JSON endpoint: https://ahr999.aix4u.com/datasets/ahr999.json
+- Kaggle discovery mirror: https://www.kaggle.com/datasets/kshift/ahr999-btc-hoarding-index-dataset
+- Zenodo archival snapshot: https://doi.org/10.5281/zenodo.20412604
 
 The canonical GitHub Actions pipeline refreshes the dataset daily after the UTC
 BTCUSDT close is available, then mirrors the latest CSV and JSON files here when
@@ -52,6 +61,13 @@ Each row is one UTC daily close:
 | `windowKind` | string | `insufficient_samples`, `expanding`, or `rolling_5y`. |
 
 ## Usage
+
+```python
+from datasets import load_dataset
+
+ds = load_dataset("kshift/ahr999-dataset", split="train")
+print(ds[-1])
+```
 
 ```python
 import pandas as pd
