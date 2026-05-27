@@ -1,0 +1,16 @@
+{
+  "id": "kshift/ahr999-btc-hoarding-index-quickstart",
+  "title": "AHR999 BTC Hoarding Index Quickstart",
+  "code_file": "ahr999-quickstart.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "false",
+  "enable_gpu": "false",
+  "enable_internet": "false",
+  "dataset_sources": [
+    "kshift/ahr999-btc-hoarding-index-dataset"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

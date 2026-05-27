@@ -1,0 +1,39 @@
+name: Publish Kaggle notebook
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: kaggle-notebook
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Publish Kaggle notebook
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          if [ -n "${KAGGLE_USERNAME:-}" ] && [ -n "${KAGGLE_KEY:-}" ]; then
+            mkdir -p ~/.kaggle
+            printf '{"username":"%s","key":"%s"}' "$KAGGLE_USERNAME" "$KAGGLE_KEY" > ~/.kaggle/kaggle.json
+            chmod 600 ~/.kaggle/kaggle.json
+          elif [ -n "${KAGGLE_API_TOKEN:-}" ]; then
+            echo "::notice::KAGGLE_API_TOKEN can update datasets here but returned 403 for kernels; configure KAGGLE_USERNAME and KAGGLE_KEY to publish notebooks by workflow."
+            exit 0
+          else
+            echo "::notice::Kaggle credentials are not configured; skipping Kaggle notebook publish."
+            exit 0
+          fi
+
+          python -m pip install --upgrade "kaggle>=1.8.0"
+          kaggle kernels push -p platforms/kaggle/notebooks
