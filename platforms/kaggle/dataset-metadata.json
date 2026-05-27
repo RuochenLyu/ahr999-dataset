@@ -1,0 +1,63 @@
+{
+  "title": "AHR999 BTC Hoarding Index Dataset",
+  "subtitle": "Daily-updated open AHR999 BTC hoarding index data in CSV and JSON",
+  "id": "kshift/ahr999-btc-hoarding-index-dataset",
+  "licenses": [
+    {
+      "name": "CC-BY-4.0"
+    }
+  ],
+  "keywords": [
+    "finance",
+    "json"
+  ],
+  "description": "Open, daily-updated AHR999 BTC hoarding index dataset, self-computed from Binance BTCUSDT daily closes and published as CSV and JSON. This Kaggle dataset is a discovery mirror; the canonical source is https://ahr999.aix4u.com/ and https://github.com/RuochenLyu/ahr999-dataset. The canonical GitHub Actions pipeline refreshes data daily after the UTC BTCUSDT close is available, then mirrors the latest CSV and JSON files to Kaggle when mirror credentials are configured. This dataset is for research, education, and observability only. It is not financial advice.",
+  "resources": [
+    {
+      "path": "ahr999.csv",
+      "description": "UTF-8 CSV AHR999 dataset ordered by UTC date ascending.",
+      "schema": {
+        "fields": [
+          {
+            "name": "date",
+            "description": "UTC date in YYYY-MM-DD.",
+            "type": "date"
+          },
+          {
+            "name": "close",
+            "description": "BTCUSDT daily close from Binance public market data.",
+            "type": "number"
+          },
+          {
+            "name": "ma200",
+            "description": "200-day simple moving average of close, null until enough history exists.",
+            "type": "number"
+          },
+          {
+            "name": "ahr999",
+            "description": "(close / ma200) * (close / fitted), null when ma200 is null.",
+            "type": "number"
+          },
+          {
+            "name": "quantile5y",
+            "description": "Empirical rank of ahr999 inside the active recent window.",
+            "type": "number"
+          },
+          {
+            "name": "windowKind",
+            "description": "Window regime used for quantile5y: insufficient_samples, expanding, or rolling_5y.",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "path": "ahr999.json",
+      "description": "JSON array with the same rows as the CSV dataset, ordered by UTC date ascending."
+    },
+    {
+      "path": "DATA_LICENSE",
+      "description": "CC BY 4.0 data license and attribution text."
+    }
+  ]
+}

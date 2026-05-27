@@ -1,0 +1,96 @@
+name: Mirror datasets
+
+on:
+  workflow_run:
+    workflows: ["Daily update & deploy"]
+    types: [completed]
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'datasets/ahr999.csv'
+      - 'datasets/ahr999.json'
+      - 'DATA_LICENSE'
+      - 'platforms/**'
+      - '.github/workflows/mirror-datasets.yml'
+
+concurrency:
+  group: dataset-mirrors
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Read latest dataset date
+        id: dataset
+        run: |
+          latest_date="$(tail -n 1 datasets/ahr999.csv | cut -d, -f1)"
+          echo "latest_date=${latest_date}" >> "$GITHUB_OUTPUT"
+          echo "latest dataset date: ${latest_date}"
+
+      - name: Prepare Hugging Face mirror payload
+        run: |
+          rm -rf /tmp/ahr999-huggingface
+          mkdir -p /tmp/ahr999-huggingface
+          cp platforms/huggingface/README.md /tmp/ahr999-huggingface/README.md
+          cp DATA_LICENSE /tmp/ahr999-huggingface/DATA_LICENSE
+          cp datasets/ahr999.csv /tmp/ahr999-huggingface/ahr999.csv
+          cp datasets/ahr999.json /tmp/ahr999-huggingface/ahr999.json
+
+      - name: Mirror to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          LATEST_DATE: ${{ steps.dataset.outputs.latest_date }}
+        run: |
+          if [ -z "${HF_TOKEN:-}" ]; then
+            echo "::notice::HF_TOKEN is not configured; skipping Hugging Face mirror."
+            exit 0
+          fi
+
+          python -m pip install --upgrade huggingface_hub
+          hf upload kshift/ahr999-dataset /tmp/ahr999-huggingface . \
+            --repo-type=dataset \
+            --token "$HF_TOKEN" \
+            --commit-message "chore(data): mirror ${LATEST_DATE}"
+
+      - name: Prepare Kaggle mirror payload
+        run: |
+          rm -rf /tmp/ahr999-kaggle
+          mkdir -p /tmp/ahr999-kaggle
+          cp platforms/kaggle/dataset-metadata.json /tmp/ahr999-kaggle/dataset-metadata.json
+          cp DATA_LICENSE /tmp/ahr999-kaggle/DATA_LICENSE
+          cp datasets/ahr999.csv /tmp/ahr999-kaggle/ahr999.csv
+          cp datasets/ahr999.json /tmp/ahr999-kaggle/ahr999.json
+
+      - name: Mirror to Kaggle
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+          LATEST_DATE: ${{ steps.dataset.outputs.latest_date }}
+        run: |
+          if [ -z "${KAGGLE_API_TOKEN:-}" ]; then
+            echo "::notice::KAGGLE_API_TOKEN is not configured; skipping Kaggle mirror."
+            exit 0
+          fi
+
+          python -m pip install --upgrade "kaggle>=1.8.0"
+
+          if kaggle datasets files kshift/ahr999-btc-hoarding-index-dataset >/tmp/kaggle-files.txt 2>&1; then
+            kaggle datasets version \
+              -p /tmp/ahr999-kaggle \
+              -m "chore(data): mirror ${LATEST_DATE}"
+          else
+            cat /tmp/kaggle-files.txt
+            kaggle datasets create \
+              -p /tmp/ahr999-kaggle \
+              --public
+          fi

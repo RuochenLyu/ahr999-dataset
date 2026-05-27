@@ -24,6 +24,17 @@ AHR999（囤币指标）由九神提出，是基于 BTC 价格的启发式定投
 全量数据（~3100+ 行，按日期升序），每日 UTC 00:37（北京时间 08:37）自动更新。
 字段定义见下方[数据字段](#数据字段)。
 
+## 发现镜像
+
+本仓库和上方 CDN endpoint 仍然是 canonical source。第三方平台只是发现镜像，
+不是数据真源：
+
+- **Hugging Face** · `kshift/ahr999-dataset`
+- **Kaggle** · `kshift/ahr999-btc-hoarding-index-dataset`
+
+每日更新 workflow 成功后，`.github/workflows/mirror-datasets.yml` 会在配置
+平台凭据时自动同步最新数据。
+
 ## 快速使用
 
 获取最新值：
@@ -106,6 +117,20 @@ AHR999_BINANCE_API_BASE_URL=https://api.binance.com pnpm sync
 
 更新 + 构建 + 部署合并在**一个** workflow 中：`GITHUB_TOKEN` 推的 commit 不会
 触发下游 workflow，分开没意义。
+
+### 数据镜像
+
+可选的镜像 workflow（`.github/workflows/mirror-datasets.yml`）会在每日更新
+workflow 成功后，把最新的 `datasets/ahr999.{json,csv}` 发布到 Hugging Face
+和 Kaggle。它是 best-effort：缺少某个平台的 secret 时跳过该平台，不影响
+canonical 数据更新。
+
+需要配置的仓库 secrets：
+
+| 平台 | secrets |
+|---|---|
+| Hugging Face | `HF_TOKEN` |
+| Kaggle | `KAGGLE_API_TOKEN` |
 
 ## 致谢
 

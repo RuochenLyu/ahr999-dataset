@@ -26,6 +26,17 @@ paying for proprietary APIs.
 Full series (~3,100+ rows, oldest first), refreshed daily at 00:37 UTC. See
 [Data schema](#data-schema) below for field definitions.
 
+## Discovery mirrors
+
+The canonical source remains this repository and the CDN endpoints above.
+Third-party platforms are discovery mirrors, not the source of truth:
+
+- **Hugging Face** · `kshift/ahr999-dataset`
+- **Kaggle** · `kshift/ahr999-btc-hoarding-index-dataset`
+
+Mirror uploads are handled by `.github/workflows/mirror-datasets.yml` after the
+daily update workflow succeeds, when platform credentials are configured.
+
 ## Quick usage
 
 Fetch the latest value:
@@ -114,6 +125,20 @@ A single GitHub Actions workflow (`.github/workflows/daily.yml`) runs at
 
 Update + build + deploy happens in **one** workflow because
 `GITHUB_TOKEN`-pushed commits don't trigger downstream workflows.
+
+### Dataset mirrors
+
+An optional mirror workflow (`.github/workflows/mirror-datasets.yml`) publishes
+the latest `datasets/ahr999.{json,csv}` files to Hugging Face and Kaggle after
+the daily workflow completes successfully. It is intentionally best-effort:
+missing secrets skip that platform instead of failing the canonical update.
+
+Required repository secrets:
+
+| platform | secrets |
+|---|---|
+| Hugging Face | `HF_TOKEN` |
+| Kaggle | `KAGGLE_API_TOKEN` |
 
 ## Acknowledgements
 
