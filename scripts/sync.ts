@@ -14,7 +14,11 @@ import {
   readDataset,
   writeDatasetAtomic,
 } from "../src/storage.js";
-import { lastClosedUtcDay, subtractDays } from "../src/time.js";
+import {
+  findMissingDateSpans,
+  lastClosedUtcDay,
+  subtractDays,
+} from "../src/time.js";
 
 interface SyncArgs {
   backfill: boolean;
@@ -59,6 +63,26 @@ function resolveDatasetPath(): string {
   return path.resolve(here, "..", DATASET_JSON_PATH);
 }
 
+function earliestDate(left: string, right: string): string {
+  return left <= right ? left : right;
+}
+
+function formatGapSummary(
+  spans: Array<{ start: string; end: string; days: number }>,
+): string {
+  const shown = spans
+    .slice(0, 5)
+    .map((span) =>
+      span.start === span.end
+        ? span.start
+        : `${span.start}..${span.end} (${span.days} days)`,
+    );
+  if (spans.length > shown.length) {
+    shown.push(`+${spans.length - shown.length} more`);
+  }
+  return shown.join(", ");
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const datasetPath = resolveDatasetPath();
@@ -68,15 +92,36 @@ async function main(): Promise<void> {
 
   // Drop partial/future rows (> endDate) — source has a self-heal for rows
   // that somehow slipped past the last closed UTC day.
-  const cleanExisting = existingPoints.filter((row) => row.date <= endDate);
+  const cleanExisting = existingPoints
+    .filter((row) => row.date <= endDate)
+    .sort((left, right) => left.date.localeCompare(right.date));
 
-  const startDate =
-    args.backfill || cleanExisting.length === 0
-      ? BACKFILL_START
-      : subtractDays(
-          cleanExisting[cleanExisting.length - 1]!.date,
-          RESYNC_LOOKBACK_DAYS,
-        );
+  const latestExistingDate = cleanExisting[cleanExisting.length - 1]?.date;
+  const historicalGaps = latestExistingDate
+    ? findMissingDateSpans(
+        cleanExisting.map((row) => row.date),
+        BACKFILL_START,
+        latestExistingDate,
+      )
+    : [];
+  const earliestHistoricalGap = historicalGaps[0]?.start;
+  const lookbackStart = latestExistingDate
+    ? subtractDays(latestExistingDate, RESYNC_LOOKBACK_DAYS)
+    : BACKFILL_START;
+
+  let startDate = lookbackStart;
+  if (args.backfill || cleanExisting.length === 0) {
+    startDate = BACKFILL_START;
+  } else if (earliestHistoricalGap) {
+    startDate = earliestDate(lookbackStart, earliestHistoricalGap);
+  }
+
+  if (historicalGaps.length > 0) {
+    const missingDays = historicalGaps.reduce((sum, gap) => sum + gap.days, 0);
+    console.log(
+      `[sync] detected ${missingDays} historical missing day(s): ${formatGapSummary(historicalGaps)}`,
+    );
+  }
 
   console.log(
     `[sync] range: ${startDate} → ${endDate} (backfill=${args.backfill}, existing=${cleanExisting.length})`,
@@ -97,6 +142,17 @@ async function main(): Promise<void> {
   const mergedCloses = [...merged.values()]
     .filter((row) => row.date <= endDate)
     .sort((left, right) => left.date.localeCompare(right.date));
+  const remainingGaps = findMissingDateSpans(
+    mergedCloses.map((row) => row.date),
+    BACKFILL_START,
+    endDate,
+  );
+  if (remainingGaps.length > 0) {
+    const missingDays = remainingGaps.reduce((sum, gap) => sum + gap.days, 0);
+    throw new Error(
+      `[sync] ${missingDays} missing day(s) remain after Binance fetch: ${formatGapSummary(remainingGaps)}`,
+    );
+  }
 
   const series = computeAhr999Series(mergedCloses);
 

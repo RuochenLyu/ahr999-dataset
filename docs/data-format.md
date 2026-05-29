@@ -74,10 +74,13 @@ date,close,ma200,ahr999,quantile5y,windowKind
   `k / N` where `N = validObservations ≤ 1825`.
 - Once `windowKind` flips to `"rolling_5y"` (at the 1,825th valid AHR
   observation), it never flips back — newer data only extends the series.
-- A row for `date = D` in version `v2` will have `close[D]` equal to
-  `close[D]` in version `v1` **if** `D` is more than 5 days before `v1`'s
-  latest date. Within the last 5 days, `close` may be refined by Binance's
-  late corrections. See the sync script's 5-day self-heal lookback.
+- During normal incremental sync, a row for `date = D` in version `v2` will have
+  `close[D]` equal to `close[D]` in version `v1` **if** `D` is more than 5 days
+  before `v1`'s latest date. Within the last 5 days, `close` may be refined by
+  Binance's late corrections. See the sync script's 5-day self-heal lookback.
+- If the stored dataset has an older missing date, the next sync expands the
+  fetch range back to the earliest gap and recomputes the full series; rows
+  after that gap may be refreshed if Binance returns historical corrections.
 
 ## Row counts
 

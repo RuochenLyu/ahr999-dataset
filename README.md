@@ -116,7 +116,8 @@ discussion of deviations from the original 九神 formulation.
 A single GitHub Actions workflow (`.github/workflows/daily.yml`) runs at
 00:37 UTC every day:
 
-1. Fetch missing Binance daily closes (with a 5-day self-heal lookback to
+1. Scan the stored dataset for historical date gaps, then fetch Binance daily
+   closes from the earliest required date (with a 5-day self-heal lookback to
    absorb late corrections).
 2. Recompute the full series (~3,100 rows, < 50 ms) — cheap and keeps the
    window bookkeeping trivially correct.

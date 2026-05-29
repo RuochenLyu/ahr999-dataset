@@ -110,7 +110,8 @@ AHR999_BINANCE_API_BASE_URL=https://api.binance.com pnpm sync
 
 单一 GitHub Actions workflow（`.github/workflows/daily.yml`）每天 UTC 00:37 跑：
 
-1. 抓取缺失的 Binance 日 K（带 5 天回溯，覆盖可能的后置修正）
+1. 先扫描本地数据是否存在历史日期缺口，再从最早需要补齐的日期抓取 Binance
+   日 K（仍保留 5 天回溯，覆盖可能的后置修正）
 2. 全量重算（~3100 行，<50 ms）——便宜，窗口簿记零脑力
 3. 若 `datasets/` 有变更则 commit
 4. 构建 Astro 站点并部署到 GitHub Pages

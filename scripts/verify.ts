@@ -2,14 +2,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { DATASET_JSON_PATH } from "../src/config.js";
+import { BACKFILL_START, DATASET_JSON_PATH } from "../src/config.js";
 import {
   Ahr999DatasetSchema,
   Ahr999PointSchema,
 } from "../src/schema.js";
 import type { Ahr999Point } from "../src/schema.js";
 import { readDataset } from "../src/storage.js";
-import { lastClosedUtcDay } from "../src/time.js";
+import { findMissingDateSpans, lastClosedUtcDay } from "../src/time.js";
 import checkpointRowsRaw from "./fixtures/verify-checkpoints.json";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -125,6 +125,26 @@ function assertDatasetContract(ours: Ahr999Point[]): void {
   if (!latest) {
     throw new Error("Dataset is unexpectedly empty");
   }
+
+  const gaps = findMissingDateSpans(
+    ours.map((row) => row.date),
+    BACKFILL_START,
+    latest.date,
+  );
+  if (gaps.length > 0) {
+    const detail = gaps
+      .slice(0, 5)
+      .map((gap) =>
+        gap.start === gap.end
+          ? gap.start
+          : `${gap.start}..${gap.end} (${gap.days} days)`,
+      )
+      .join(", ");
+    throw new Error(
+      `Dataset has ${gaps.length} missing date span(s) from ${BACKFILL_START} to ${latest.date}: ${detail}`,
+    );
+  }
+
   const cutoff = lastClosedUtcDay();
   if (latest.date > cutoff) {
     throw new Error(
@@ -133,7 +153,7 @@ function assertDatasetContract(ours: Ahr999Point[]): void {
   }
 
   console.log(
-    `[verify] dataset contract: sorted, unique, latest=${latest.date} <= ${cutoff} ✓`,
+    `[verify] dataset contract: sorted, unique, contiguous, latest=${latest.date} <= ${cutoff} ✓`,
   );
 }
 
