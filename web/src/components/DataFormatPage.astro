@@ -1,0 +1,193 @@
+---
+import DocLayout from '../layouts/DocLayout.astro';
+import RelatedNav from './RelatedNav.astro';
+import { docNav } from '../lib/docNav';
+
+export interface Props {
+  lang: 'en' | 'zh';
+}
+
+const { lang } = Astro.props;
+const isEn = lang === 'en';
+const nav = docNav(lang);
+
+const path = isEn ? '/data-format/' : '/zh/data-format/';
+const altPath = isEn ? '/zh/data-format/' : '/data-format/';
+const canonical = `https://ahr999.aix4u.com${path}`;
+
+const title = isEn
+  ? 'AHR999 Data Format · JSON & CSV Field Reference'
+  : 'AHR999 数据格式 · JSON 与 CSV 字段说明';
+const description = isEn
+  ? 'The AHR999 dataset field by field: JSON and CSV shapes, types, nullability, how null is serialized, and the invariants consumers can rely on.'
+  : 'AHR999 数据集逐字段说明：JSON 与 CSV 结构、类型、可空性、null 的序列化方式，以及消费者可依赖的不变量。';
+const eyebrow = isEn ? 'Data format' : '数据格式';
+const heading = isEn
+  ? 'The <em>AHR999</em> data format'
+  : '<em>AHR999</em> 数据格式';
+const lead = isEn
+  ? 'The dataset ships in two serializations — <code>ahr999.json</code> and <code>ahr999.csv</code> — with identical rows and columns. This page is the field-by-field contract: types, null handling, and the invariants you can build on.'
+  : '数据集提供两种序列化 —— <code>ahr999.json</code> 与 <code>ahr999.csv</code> —— 行列完全一致。本页是逐字段的契约：类型、null 处理，以及你可以依赖的不变量。';
+
+const breadcrumb = [
+  { label: nav.home.label, href: nav.home.href },
+  { label: nav.dataFormat.label },
+];
+
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: isEn ? 'AHR999 dataset data format' : 'AHR999 数据集数据格式',
+    description,
+    inLanguage: isEn ? 'en' : 'zh-Hans',
+    url: canonical,
+    mainEntityOfPage: canonical,
+    about: 'AHR999 Bitcoin hoarding index dataset',
+    license: 'https://creativecommons.org/licenses/by/4.0/',
+    author: {
+      '@type': 'Organization',
+      name: 'ahr999-dataset contributors',
+      url: 'https://github.com/RuochenLyu/ahr999-dataset',
+    },
+  },
+];
+
+const articleHtml = isEn
+  ? `
+<h2 id="json">JSON</h2>
+<p>Published at <a href="https://ahr999.aix4u.com/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a>. A single JSON array, one object per UTC calendar day, ordered oldest to newest. Pretty-printed with a two-space indent and a trailing newline so the <code>git diff</code> on each daily commit stays readable.</p>
+<pre><code>[
+  {
+    "date": "2017-08-17",
+    "close": 4285.08,
+    "ma200": null,
+    "ahr999": null,
+    "quantile5y": null,
+    "windowKind": "insufficient_samples"
+  },
+  {
+    "date": "2026-04-19",
+    "close": 73801.79,
+    "ma200": 86578.65964999999,
+    "ahr999": 0.4116636687277032,
+    "quantile5y": 0.13917808219178082,
+    "windowKind": "rolling_5y"
+  }
+]</code></pre>
+
+<h2 id="csv">CSV</h2>
+<p>Published at <a href="https://ahr999.aix4u.com/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a>. Same rows and columns as the JSON, RFC 4180 compatible, UTF-8, trailing newline. A JSON <code>null</code> is serialized as an empty field.</p>
+<pre><code>date,close,ma200,ahr999,quantile5y,windowKind
+2017-08-17,4285.08,,,,insufficient_samples
+...
+2026-04-19,73801.79,86578.65964999999,0.4116636687277032,0.13917808219178082,rolling_5y</code></pre>
+
+<h2 id="fields">Field reference</h2>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Nullable</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>date</code></td><td><code>string</code></td><td>no</td><td>UTC calendar day; the close is Binance's 00:00-to-24:00-UTC daily kline close.</td></tr>
+<tr><td><code>close</code></td><td><code>number</code></td><td>no</td><td>USDT per BTC, from <code>klines?symbol=BTCUSDT&amp;interval=1d</code>, field <code>[4]</code>.</td></tr>
+<tr><td><code>ma200</code></td><td><code>number | null</code></td><td>yes</td><td>200-day simple moving average of <code>close</code>; <code>null</code> for the first 199 rows.</td></tr>
+<tr><td><code>ahr999</code></td><td><code>number | null</code></td><td>yes</td><td><code>(close / ma200) × (close / fitted)</code>; <code>null</code> when <code>ma200</code> is null.</td></tr>
+<tr><td><code>quantile5y</code></td><td><code>number | null</code>, in <code>[0, 1]</code></td><td>yes</td><td>Empirical rank of <code>ahr999</code> within the active window; <code>null</code> during the first 365 valid AHR observations.</td></tr>
+<tr><td><code>windowKind</code></td><td><code>"insufficient_samples" | "expanding" | "rolling_5y"</code></td><td>no</td><td>Which window applied for this row.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="invariants">Invariants you can rely on</h2>
+<ul>
+<li>Rows are sorted strictly ascending by <code>date</code>, with no duplicates.</li>
+<li>No future dates: the latest <code>date</code> is always ≤ (today UTC − 1 day).</li>
+<li>If <code>ma200 === null</code>, then <code>ahr999</code> and <code>quantile5y</code> are <code>null</code> and <code>windowKind === "insufficient_samples"</code>.</li>
+<li>If <code>ahr999 !== null</code> and <code>quantile5y === null</code>, then <code>windowKind === "insufficient_samples"</code> — a valid AHR exists, but fewer than 365 observations to rank it.</li>
+<li><code>quantile5y</code> is a discrete rank: only values of the form <code>k / N</code> with <code>N = validObservations ≤ 1825</code>.</li>
+<li>Once <code>windowKind</code> flips to <code>"rolling_5y"</code> (at the 1,825th valid AHR observation), it never flips back.</li>
+<li>During normal incremental sync, <code>close</code> for a date more than 5 days old is stable; within the last 5 days it may be refined by Binance late corrections (a 5-day self-heal lookback).</li>
+</ul>
+
+<h2 id="rows">Row counts</h2>
+<p>The dataset starts at <code>2017-08-17</code>, so on any given day you should expect approximately:</p>
+<pre><code>rows ≈ (today_UTC − 2017-08-17) / 1 day</code></pre>
+<p>For reference, the 2026-04-19 snapshot has 3,168 rows. To consume the data programmatically, see the <a href="${nav.api.href}">API reference</a>; for how each value is derived, see the <a href="${nav.methodology.href}">methodology</a>.</p>
+`
+  : `
+<h2 id="json">JSON</h2>
+<p>发布于 <a href="https://ahr999.aix4u.com/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a>。一个 JSON 数组，每个 UTC 日历日对应一个对象，按从旧到新排序。以两空格缩进美化并带行尾换行，使每日提交的 <code>git diff</code> 保持可读。</p>
+<pre><code>[
+  {
+    "date": "2017-08-17",
+    "close": 4285.08,
+    "ma200": null,
+    "ahr999": null,
+    "quantile5y": null,
+    "windowKind": "insufficient_samples"
+  },
+  {
+    "date": "2026-04-19",
+    "close": 73801.79,
+    "ma200": 86578.65964999999,
+    "ahr999": 0.4116636687277032,
+    "quantile5y": 0.13917808219178082,
+    "windowKind": "rolling_5y"
+  }
+]</code></pre>
+
+<h2 id="csv">CSV</h2>
+<p>发布于 <a href="https://ahr999.aix4u.com/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a>。与 JSON 相同的行列，兼容 RFC 4180，UTF-8，带行尾换行。JSON 的 <code>null</code> 序列化为空字段。</p>
+<pre><code>date,close,ma200,ahr999,quantile5y,windowKind
+2017-08-17,4285.08,,,,insufficient_samples
+...
+2026-04-19,73801.79,86578.65964999999,0.4116636687277032,0.13917808219178082,rolling_5y</code></pre>
+
+<h2 id="fields">字段说明</h2>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>字段</th><th>类型</th><th>可空</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>date</code></td><td><code>string</code></td><td>否</td><td>UTC 日历日；收盘价取 Binance 00:00 至 24:00 UTC 的日 K 收盘。</td></tr>
+<tr><td><code>close</code></td><td><code>number</code></td><td>否</td><td>每 BTC 的 USDT 价，来自 <code>klines?symbol=BTCUSDT&amp;interval=1d</code> 的字段 <code>[4]</code>。</td></tr>
+<tr><td><code>ma200</code></td><td><code>number | null</code></td><td>是</td><td><code>close</code> 的 200 日简单移动平均；前 199 行为 <code>null</code>。</td></tr>
+<tr><td><code>ahr999</code></td><td><code>number | null</code></td><td>是</td><td><code>(close / ma200) × (close / fitted)</code>；<code>ma200</code> 为 null 时取 <code>null</code>。</td></tr>
+<tr><td><code>quantile5y</code></td><td><code>number | null</code>，∈ <code>[0, 1]</code></td><td>是</td><td><code>ahr999</code> 在当前窗口内的经验排名；前 365 个有效 AHR 观测期间为 <code>null</code>。</td></tr>
+<tr><td><code>windowKind</code></td><td><code>"insufficient_samples" | "expanding" | "rolling_5y"</code></td><td>否</td><td>该行采用的窗口类型。</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="invariants">你可以依赖的不变量</h2>
+<ul>
+<li>行按 <code>date</code> 严格升序排列，无重复。</li>
+<li>没有未来日期：最新 <code>date</code> 始终 ≤（今日 UTC − 1 天）。</li>
+<li>若 <code>ma200 === null</code>，则 <code>ahr999</code> 与 <code>quantile5y</code> 均为 <code>null</code>，且 <code>windowKind === "insufficient_samples"</code>。</li>
+<li>若 <code>ahr999 !== null</code> 且 <code>quantile5y === null</code>，则 <code>windowKind === "insufficient_samples"</code> —— 即有有效 AHR，但观测不足 365 个、无法排名。</li>
+<li><code>quantile5y</code> 是离散排名：只取 <code>k / N</code> 形式的值，其中 <code>N = 有效观测数 ≤ 1825</code>。</li>
+<li>一旦 <code>windowKind</code> 翻转为 <code>"rolling_5y"</code>（第 1,825 个有效 AHR 观测），便不再翻回。</li>
+<li>正常增量同步时，超过 5 天的日期其 <code>close</code> 稳定；最近 5 天内可能因 Binance 的迟到修正而被刷新（5 天自愈回看）。</li>
+</ul>
+
+<h2 id="rows">行数</h2>
+<p>数据集起点为 <code>2017-08-17</code>，因此任意一天大致可预期：</p>
+<pre><code>rows ≈ (today_UTC − 2017-08-17) / 1 天</code></pre>
+<p>作为参照，2026-04-19 的快照有 3,168 行。如需以程序方式取数，见 <a href="${nav.api.href}">API 参考</a>；各数值如何推导，见<a href="${nav.methodology.href}">方法论</a>。</p>
+`;
+---
+
+<DocLayout
+  lang={lang}
+  title={title}
+  description={description}
+  path={path}
+  altPath={altPath}
+  eyebrow={eyebrow}
+  heading={heading}
+  lead={lead}
+  breadcrumb={breadcrumb}
+  structuredData={structuredData}
+>
+  <Fragment set:html={articleHtml} />
+  <RelatedNav slot="related" lang={lang} current="dataFormat" />
+</DocLayout>

@@ -1,0 +1,25 @@
+---
+import { docNav, type Lang, type DocKey } from '../lib/docNav';
+
+export interface Props {
+  lang: Lang;
+  current: DocKey;
+}
+
+const { lang, current } = Astro.props;
+const nav = docNav(lang);
+const order: DocKey[] = ['home', 'methodology', 'dataFormat', 'api', 'faq'];
+const items = order.filter((k) => k !== current).map((k) => nav[k]);
+const heading = lang === 'en' ? 'Keep reading' : '继续阅读';
+---
+
+<aside class="doc-related" aria-label={heading}>
+  {
+    items.map((it) => (
+      <a href={it.href}>
+        <span class="r-label">{it.label}</span>
+        <span class="r-title">{it.cardTitle}</span>
+      </a>
+    ))
+  }
+</aside>

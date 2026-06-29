@@ -1,0 +1,269 @@
+---
+import DocLayout from '../layouts/DocLayout.astro';
+import RelatedNav from './RelatedNav.astro';
+import { docNav } from '../lib/docNav';
+
+export interface Props {
+  lang: 'en' | 'zh';
+}
+
+const { lang } = Astro.props;
+const isEn = lang === 'en';
+const nav = docNav(lang);
+
+const path = isEn ? '/methodology/' : '/zh/methodology/';
+const altPath = isEn ? '/zh/methodology/' : '/methodology/';
+const canonical = `https://ahr999.aix4u.com${path}`;
+
+const title = isEn
+  ? 'AHR999 Methodology · Formula, Constants & 5-Year Quantile'
+  : 'AHR999 方法论 · 公式、常数与 5 年分位';
+const description = isEn
+  ? 'How the AHR999 index is computed: the (close/MA200)×(close/fitted) formula, the fitted-curve constants, and the empirical 5-year quantile.'
+  : 'AHR999 指标的完整算法：(close/MA200)×(close/fitted) 公式、拟合公允价曲线常数，以及经验式 5 年分位，可由 Binance BTCUSDT 日 K 完整复现。';
+const eyebrow = isEn ? 'Methodology' : '方法论';
+const heading = isEn
+  ? 'How <em>AHR999</em> is computed'
+  : '<em>AHR999</em> 的计算方法';
+const lead = isEn
+  ? 'Every field in this dataset — <code>ma200</code>, <code>ahr999</code>, <code>quantile5y</code> — is recomputed daily from Binance BTCUSDT daily closes by open-source TypeScript. This page documents the exact formula, constants, and window rules, so any value is reproducible by hand.'
+  : '本数据集中的每个字段 —— <code>ma200</code>、<code>ahr999</code>、<code>quantile5y</code> —— 都由开源 TypeScript 每日从 Binance BTCUSDT 日 K 重新计算。本页给出确切的公式、常数与窗口规则，任何数值都可手工复现。';
+
+const breadcrumb = [
+  { label: nav.home.label, href: nav.home.href },
+  { label: nav.methodology.label },
+];
+
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: isEn
+      ? 'AHR999 index methodology'
+      : 'AHR999 指标计算方法',
+    description,
+    inLanguage: isEn ? 'en' : 'zh-Hans',
+    url: canonical,
+    mainEntityOfPage: canonical,
+    about: 'AHR999 Bitcoin hoarding index',
+    license: 'https://creativecommons.org/licenses/by/4.0/',
+    author: {
+      '@type': 'Organization',
+      name: 'ahr999-dataset contributors',
+      url: 'https://github.com/RuochenLyu/ahr999-dataset',
+    },
+  },
+];
+
+const articleHtml = isEn
+  ? `
+<h2 id="inputs">Inputs</h2>
+<ul>
+  <li><strong>Price source.</strong> Binance public endpoint <code>GET /api/v3/klines</code> with <code>symbol=BTCUSDT</code>, <code>interval=1d</code>. Only the <strong>close</strong> of each daily kline is kept — the repository does not redistribute raw OHLCV data.</li>
+  <li><strong>Backfill start.</strong> <code>2017-08-17</code>, the earliest daily bar Binance serves for BTCUSDT.</li>
+  <li><strong>Cutoff.</strong> <code>today_UTC − 1 day</code>, the last fully closed UTC day. The current UTC day is a partial bar that would make <code>quantile5y</code> jitter intraday.</li>
+</ul>
+
+<h2 id="constants">Constants</h2>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>Name</th><th>Value</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>GENESIS</code></td><td><code>2009-01-03</code></td><td>BTC genesis block date; anchor for coin age.</td></tr>
+<tr><td><code>MA_WINDOW</code></td><td><code>200</code></td><td>Rolling window for <code>ma200</code>.</td></tr>
+<tr><td><code>FIT_A</code></td><td><code>5.84</code></td><td>Slope of the log-log fitted fair-value curve.</td></tr>
+<tr><td><code>FIT_B</code></td><td><code>−17.01</code></td><td>Intercept of the fitted curve.</td></tr>
+<tr><td><code>QUANTILE_MIN_OBS</code></td><td><code>365</code></td><td>Minimum valid AHR observations before <code>quantile5y</code> is reported.</td></tr>
+<tr><td><code>QUANTILE_WINDOW</code></td><td><code>1825</code></td><td>Rolling window size (5 × 365) once enough observations exist.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="formula">Step by step</h2>
+<p>For each UTC day <code>d</code> with close <code>c_d</code>:</p>
+
+<h3>1 · 200-day moving average</h3>
+<pre><code>ma200_d = mean(close[d-199 .. d])</code></pre>
+<p>If fewer than 200 closes have been observed (inclusive of <code>d</code>), then <code>ma200_d = null</code>, every downstream field is <code>null</code>, and <code>windowKind = "insufficient_samples"</code>.</p>
+
+<h3>2 · Fitted fair value</h3>
+<p>The fitted curve treats BTC as an age-anchored asset, indexed by days since the genesis block:</p>
+<pre><code>coin_age_days_d = floor((d − GENESIS) / 1 day)
+fitted_d        = 10 ^ (FIT_A · log10(coin_age_days_d) + FIT_B)
+                = 10 ^ (5.84 · log10(coin_age_days_d) − 17.01)</code></pre>
+
+<h3>3 · AHR999</h3>
+<pre><code>ahr999_d = (c_d / ma200_d) · (c_d / fitted_d)</code></pre>
+<p>Two ratios multiplied:</p>
+<ul>
+<li><strong>Momentum</strong> — <code>c_d / ma200_d</code>: how expensive BTC is versus its own 200-day cost basis. Above 1, the market trades above the DCA cost; below 1, under it.</li>
+<li><strong>Age-anchored cheapness</strong> — <code>c_d / fitted_d</code>: how expensive BTC is versus its fitted long-run trajectory.</li>
+</ul>
+<p>The product compresses both signals into one scalar. The folk thresholds that appear on dashboards:</p>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>Range</th><th>Zone</th></tr></thead>
+<tbody>
+<tr><td><code>&lt; 0.45</code></td><td>bargain · 抄底区</td></tr>
+<tr><td><code>0.45 – 1.20</code></td><td>DCA zone · 定投区</td></tr>
+<tr><td><code>1.20 – 3.00</code></td><td>caution · 谨慎区</td></tr>
+<tr><td><code>&gt; 3.00</code></td><td>bubble · 泡沫区</td></tr>
+</tbody>
+</table>
+</div>
+<p>These thresholds are heuristic and not part of the formal definition.</p>
+
+<h3>4 · 5-year quantile</h3>
+<p><code>quantile5y_d</code> is the <strong>empirical rank</strong> of <code>ahr999_d</code> within a window of recent valid AHR values (including the current value):</p>
+<pre><code>quantile5y_d = count(v in window : v ≤ ahr999_d) / window.length</code></pre>
+<p>The window depends on how many valid AHR observations exist so far:</p>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>Valid observations</th><th>Window</th><th><code>windowKind</code></th><th><code>quantile5y</code></th></tr></thead>
+<tbody>
+<tr><td><code>&lt; 365</code></td><td>—</td><td><code>insufficient_samples</code></td><td><code>null</code></td></tr>
+<tr><td><code>365 – 1824</code></td><td>all observations to date (expanding)</td><td><code>expanding</code></td><td>reported</td></tr>
+<tr><td><code>≥ 1825</code></td><td>last 1,825 observations (rolling)</td><td><code>rolling_5y</code></td><td>reported</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="rank">Discrete rank vs. interpolation</h2>
+<p>The quantile is the discrete rank <code>count(v ≤ current) / N</code>, not numpy's default linear-interpolation quantile. Rationale:</p>
+<ul>
+<li>The original 九神 community implementations all use the discrete rank.</li>
+<li>With ~1,800 observations the rank resolution is ≈ 0.00055 — finer than any actionable reading of the number.</li>
+<li>It has a crisp meaning: "what fraction of the last five years was this cheap or cheaper?"</li>
+</ul>
+<p>You can verify it by hand at the first non-null quantile row, <code>2019-03-03</code>, where <code>quantile5y = 78 / 365 = 0.2136986301369863</code> exactly.</p>
+
+<h2 id="differences">Differences from other implementations</h2>
+<h3>vs. the original 九神 formula</h3>
+<p>We use identical constants (<code>FIT_A = 5.84</code>, <code>FIT_B = −17.01</code>, <code>MA_WINDOW = 200</code>, 5-year quantile). The only deliberate choices worth knowing:</p>
+<ul>
+<li><strong>Price source.</strong> Binance BTCUSDT. Some older analyses used CoinMarketCap or OKX; these diverge pre-2018 but converge to ≤ 0.1% once BTCUSDT volume dominates.</li>
+<li><strong>Explicit window kind.</strong> <code>windowKind</code> is exposed so consumers can filter out the 365-to-1,825 expanding-window warmup.</li>
+</ul>
+<h3>vs. 9992100.xyz</h3>
+<p><code>9992100.xyz</code> is the most popular Chinese-language AHR999 dashboard. Small daily divergences (≤ 0.02 in absolute AHR999) are expected because it may update at a different UTC-adjacent cutoff and its price source and close-timestamp semantics are undocumented. Both sites should agree on the <strong>regime</strong> on any given day; don't chase numerical parity across unrelated implementations.</p>
+
+<h2 id="reproduce">Reproduce end to end</h2>
+<pre><code>pnpm sync:backfill
+pnpm export:csv
+pnpm verify   # repo checkpoints assert the first quantile / rolling rows exactly</code></pre>
+<p>Setting <code>AHR999_SOURCE_BASELINE_PATH=/path/to/ahr999-daily.jsonl</code> makes <code>pnpm verify</code> additionally run a row-by-row compare with &lt; 1e-9 relative-error tolerance. Without it, the command still enforces the repo-local checkpoints and dataset invariants. The full source lives in the <a href="https://github.com/RuochenLyu/ahr999-dataset">GitHub repository</a>.</p>
+`
+  : `
+<h2 id="inputs">输入</h2>
+<ul>
+  <li><strong>价格来源。</strong>Binance 公开端点 <code>GET /api/v3/klines</code>，参数 <code>symbol=BTCUSDT</code>、<code>interval=1d</code>。每根日 K 只保留<strong>收盘价</strong> —— 本仓库不转发原始 OHLCV 数据。</li>
+  <li><strong>回填起点。</strong><code>2017-08-17</code>，Binance 为 BTCUSDT 提供的最早日 K。</li>
+  <li><strong>截止。</strong><code>今日 UTC − 1 天</code>，即最后一个完整收盘的 UTC 日。当日 UTC 是未完成的 K，会让 <code>quantile5y</code> 在日内抖动。</li>
+</ul>
+
+<h2 id="constants">常数</h2>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>名称</th><th>取值</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>GENESIS</code></td><td><code>2009-01-03</code></td><td>BTC 创世区块日期；币龄锚点。</td></tr>
+<tr><td><code>MA_WINDOW</code></td><td><code>200</code></td><td><code>ma200</code> 的滚动窗口。</td></tr>
+<tr><td><code>FIT_A</code></td><td><code>5.84</code></td><td>log-log 拟合公允价曲线的斜率。</td></tr>
+<tr><td><code>FIT_B</code></td><td><code>−17.01</code></td><td>拟合曲线的截距。</td></tr>
+<tr><td><code>QUANTILE_MIN_OBS</code></td><td><code>365</code></td><td>报告 <code>quantile5y</code> 前所需的最少有效 AHR 观测数。</td></tr>
+<tr><td><code>QUANTILE_WINDOW</code></td><td><code>1825</code></td><td>观测足够后的滚动窗口大小（5 × 365）。</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="formula">逐步计算</h2>
+<p>对每个收盘价为 <code>c_d</code> 的 UTC 日 <code>d</code>：</p>
+
+<h3>1 · 200 日均价</h3>
+<pre><code>ma200_d = mean(close[d-199 .. d])</code></pre>
+<p>若已观测的收盘价不足 200 个（含 <code>d</code>），则 <code>ma200_d = null</code>，所有下游字段均为 <code>null</code>，且 <code>windowKind = "insufficient_samples"</code>。</p>
+
+<h3>2 · 拟合公允价</h3>
+<p>拟合曲线把 BTC 视作以币龄锚定的资产，按距创世区块的天数索引：</p>
+<pre><code>coin_age_days_d = floor((d − GENESIS) / 1 天)
+fitted_d        = 10 ^ (FIT_A · log10(coin_age_days_d) + FIT_B)
+                = 10 ^ (5.84 · log10(coin_age_days_d) − 17.01)</code></pre>
+
+<h3>3 · AHR999</h3>
+<pre><code>ahr999_d = (c_d / ma200_d) · (c_d / fitted_d)</code></pre>
+<p>两个比值相乘：</p>
+<ul>
+<li><strong>动量</strong> —— <code>c_d / ma200_d</code>：当前价相对自身 200 日成本的高低。大于 1 表示高于定投成本，小于 1 表示低于。</li>
+<li><strong>币龄锚定的便宜程度</strong> —— <code>c_d / fitted_d</code>：当前价相对拟合长期轨迹的高低。</li>
+</ul>
+<p>乘积把两个信号压缩成一个标量。各仪表盘上常见的经验阈值：</p>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>区间</th><th>档位</th></tr></thead>
+<tbody>
+<tr><td><code>&lt; 0.45</code></td><td>抄底区 · bargain</td></tr>
+<tr><td><code>0.45 – 1.20</code></td><td>定投区 · DCA</td></tr>
+<tr><td><code>1.20 – 3.00</code></td><td>谨慎区 · caution</td></tr>
+<tr><td><code>&gt; 3.00</code></td><td>泡沫区 · bubble</td></tr>
+</tbody>
+</table>
+</div>
+<p>这些阈值是经验性的，不属于公式的正式定义。</p>
+
+<h3>4 · 5 年分位</h3>
+<p><code>quantile5y_d</code> 是 <code>ahr999_d</code> 在最近有效 AHR 值窗口（含当前值）中的<strong>经验排名</strong>：</p>
+<pre><code>quantile5y_d = count(window 中 v : v ≤ ahr999_d) / window.length</code></pre>
+<p>窗口取决于到目前为止有多少个有效 AHR 观测：</p>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>有效观测数</th><th>窗口</th><th><code>windowKind</code></th><th><code>quantile5y</code></th></tr></thead>
+<tbody>
+<tr><td><code>&lt; 365</code></td><td>—</td><td><code>insufficient_samples</code></td><td><code>null</code></td></tr>
+<tr><td><code>365 – 1824</code></td><td>截至当前的全部观测（扩张）</td><td><code>expanding</code></td><td>报告</td></tr>
+<tr><td><code>≥ 1825</code></td><td>最近 1,825 个观测（滚动）</td><td><code>rolling_5y</code></td><td>报告</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="rank">离散排名 vs. 插值</h2>
+<p>分位用的是离散排名 <code>count(v ≤ current) / N</code>，而非 numpy 默认的线性插值分位。理由：</p>
+<ul>
+<li>九神社区的原始实现都用离散排名。</li>
+<li>约 1,800 个观测下，排名分辨率 ≈ 0.00055 —— 已比对该数值的任何可操作解读都更细。</li>
+<li>它含义清晰：「过去五年里有多大比例的时间比现在更便宜或一样便宜？」</li>
+</ul>
+<p>你可以在首个非空分位行 <code>2019-03-03</code> 手工验证，那里 <code>quantile5y = 78 / 365 = 0.2136986301369863</code>，精确成立。</p>
+
+<h2 id="differences">与其他实现的差异</h2>
+<h3>vs. 九神原始公式</h3>
+<p>我们使用完全相同的常数（<code>FIT_A = 5.84</code>、<code>FIT_B = −17.01</code>、<code>MA_WINDOW = 200</code>、5 年分位）。仅有的、你需要知道的有意选择：</p>
+<ul>
+<li><strong>价格来源。</strong>Binance BTCUSDT。部分旧分析用 CoinMarketCap 或 OKX；它们在 2018 年前有分歧，但在 BTCUSDT 成交量占主导后收敛到 ≤ 0.1%。</li>
+<li><strong>显式窗口类型。</strong>暴露 <code>windowKind</code>，便于消费者过滤掉 365 至 1,825 的扩张窗口预热期。</li>
+</ul>
+<h3>vs. 9992100.xyz</h3>
+<p><code>9992100.xyz</code> 是最流行的中文 AHR999 仪表盘。每日出现小幅分歧（AHR999 绝对值 ≤ 0.02）是正常的，因为它可能在不同的 UTC 邻近截止点更新，且其价格来源与收盘时间戳语义未公开。两个站点在任一天都应在<strong>档位</strong>上一致；不要去追不同实现之间的数值完全相等。</p>
+
+<h2 id="reproduce">端到端复现</h2>
+<pre><code>pnpm sync:backfill
+pnpm export:csv
+pnpm verify   # 仓库检查点精确断言首个分位 / 滚动行</code></pre>
+<p>设置 <code>AHR999_SOURCE_BASELINE_PATH=/path/to/ahr999-daily.jsonl</code> 后，<code>pnpm verify</code> 会额外按行对比，相对误差容忍度 &lt; 1e-9。不设置时，该命令仍会强制校验仓库内的检查点与数据集不变量。完整源码见 <a href="https://github.com/RuochenLyu/ahr999-dataset">GitHub 仓库</a>。</p>
+`;
+---
+
+<DocLayout
+  lang={lang}
+  title={title}
+  description={description}
+  path={path}
+  altPath={altPath}
+  eyebrow={eyebrow}
+  heading={heading}
+  lead={lead}
+  breadcrumb={breadcrumb}
+  structuredData={structuredData}
+>
+  <Fragment set:html={articleHtml} />
+  <RelatedNav slot="related" lang={lang} current="methodology" />
+</DocLayout>

@@ -1,0 +1,241 @@
+---
+import '../styles/global.css';
+import datasetJson from '../../public/datasets/ahr999.json';
+
+type Row = { date: string };
+type Crumb = { label: string; href?: string };
+
+export interface Props {
+  lang: 'en' | 'zh';
+  /** Full <title> / og:title text. */
+  title: string;
+  /** Meta + og description. */
+  description: string;
+  /** Canonical path for THIS language, e.g. '/methodology/'. */
+  path: string;
+  /** The equivalent path in the OTHER language, e.g. '/zh/methodology/'. */
+  altPath: string;
+  /** Small mono kicker above the page title. */
+  eyebrow: string;
+  /** Visible page title (may contain <em> markup). */
+  heading: string;
+  /** Intro paragraph (may contain inline markup). */
+  lead?: string;
+  /** Breadcrumb trail; the last item is the current page. */
+  breadcrumb: Crumb[];
+  /** Page-specific JSON-LD objects (FAQPage, TechArticle, …). */
+  structuredData?: Record<string, unknown>[];
+  /** Mark non-canonical pages (e.g. 404): emit noindex, skip canonical/hreflang/JSON-LD. */
+  noindex?: boolean;
+}
+
+const {
+  lang,
+  title,
+  description,
+  path,
+  altPath,
+  eyebrow,
+  heading,
+  lead,
+  breadcrumb,
+  structuredData = [],
+  noindex = false,
+} = Astro.props;
+
+const isEn = lang === 'en';
+const siteOrigin = 'https://ahr999.aix4u.com';
+
+const dataset = datasetJson as Row[];
+const latestDate = dataset[dataset.length - 1]?.date ?? '—';
+const rowCount = dataset.length;
+
+const abs = (p: string): string => new URL(p, `${siteOrigin}/`).toString();
+
+const canonicalUrl = abs(path);
+const enHref = abs(isEn ? path : altPath);
+const zhHref = abs(isEn ? altPath : path);
+const homeHref = isEn ? '/' : '/zh/';
+const ogImageUrl = abs('/og-image.png');
+const sitemapUrl = abs('/sitemap.xml');
+
+const altLangHref = altPath;
+const altLangLabel = isEn ? '中' : 'EN';
+const langAria = isEn ? 'Switch to Chinese' : '切换到英文';
+const liveTitle = isEn
+  ? 'Automated daily update at 00:37 UTC'
+  : '每日 UTC 00:37 自动更新';
+const liveLabel = isEn ? `Updated · UTC ${latestDate}` : `更新于 UTC ${latestDate}`;
+const footerLicense = isEn ? 'code MIT · data CC-BY-4.0' : '代码 MIT · 数据 CC-BY-4.0';
+const footerUpdated = isEn
+  ? `updated ${latestDate} · ${rowCount.toLocaleString()} rows`
+  : `${latestDate} 更新 · 共 ${rowCount.toLocaleString()} 行`;
+const currentYear = new Date().getUTCFullYear();
+
+// Breadcrumb structured data — built from the visible trail.
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumb.map((crumb, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: crumb.label,
+    ...(crumb.href ? { item: abs(crumb.href) } : {}),
+  })),
+};
+const allLd = [breadcrumbLd, ...structuredData];
+---
+
+<!doctype html>
+<html lang={isEn ? 'en' : 'zh-Hans'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="color-scheme" content="dark" />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    {!noindex && <link rel="canonical" href={canonicalUrl} />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content="ahr999 dataset" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" type="application/xml" href={sitemapUrl} />
+    {
+      !noindex && (
+        <>
+          <link rel="alternate" hreflang="en" href={enHref} />
+          <link rel="alternate" hreflang="zh-Hans" href={zhHref} />
+          <link rel="alternate" hreflang="x-default" href={enHref} />
+        </>
+      )
+    }
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin="anonymous"
+    />
+    {
+      !noindex &&
+        allLd.map((obj) => (
+          <script type="application/ld+json" set:html={JSON.stringify(obj)} />
+        ))
+    }
+  </head>
+  <body>
+    <div class="page-bg" aria-hidden="true">
+      <div class="bg-grid"></div>
+      <div class="bg-scan"></div>
+      <div class="bg-glow"></div>
+      <div class="bg-glow-alt"></div>
+    </div>
+
+    <header class="site-header">
+      <a class="brand" href={homeHref} aria-label="ahr999 dataset — home">
+        <span class="brand-mark">◐</span>
+        <span class="brand-name">ahr999</span>
+        <span class="brand-slash">/</span>
+        <span class="brand-sub">dataset</span>
+      </a>
+      <div class="live-indicator" title={liveTitle}>
+        <span class="pulse"></span>
+        <span>{liveLabel}</span>
+      </div>
+      <nav class="site-nav" aria-label="primary">
+        <a
+          href={altLangHref}
+          class="lang-toggle"
+          aria-label={langAria}
+          hreflang={isEn ? 'zh-Hans' : 'en'}>{altLangLabel}</a
+        >
+        <a
+          href="https://github.com/RuochenLyu/ahr999-dataset"
+          class="nav-pill"
+          target="_blank"
+          rel="noopener"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.69-.01-1.36-2.22.48-2.69-1.07-2.69-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.81.06 1.23.83 1.23.83.72 1.23 1.87.87 2.33.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.13 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.11.16 1.93.08 2.13.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"
+            ></path>
+          </svg>
+          GitHub
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="doc-shell">
+        <nav class="doc-breadcrumb" aria-label="breadcrumb">
+          {
+            breadcrumb.map((crumb, i) => (
+              <>
+                {i > 0 && <span class="sep" aria-hidden="true">/</span>}
+                {crumb.href ? (
+                  <a href={crumb.href}>{crumb.label}</a>
+                ) : (
+                  <span class="current" aria-current="page">
+                    {crumb.label}
+                  </span>
+                )}
+              </>
+            ))
+          }
+        </nav>
+
+        <header class="doc-header">
+          <div class="doc-eyebrow">
+            <span class="label-dot"></span>
+            <span>{eyebrow}</span>
+          </div>
+          <h1 class="doc-title" set:html={heading}></h1>
+          {lead && <p class="doc-lead" set:html={lead}></p>}
+        </header>
+
+        <article class="doc-article">
+          <slot />
+        </article>
+
+        <slot name="related" />
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-strip">
+        <span class="footer-brand">
+          <span class="brand-mark">◐</span>
+          <span class="brand-name">ahr999</span>
+          <span class="brand-slash">/</span>
+          <span class="brand-sub">dataset</span>
+        </span>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <span>© {currentYear}</span>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <span>{footerLicense}</span>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <span>{footerUpdated}</span>
+        <a
+          href="https://github.com/RuochenLyu/ahr999-dataset"
+          target="_blank"
+          rel="noopener"
+          class="footer-github">GitHub ↗</a
+        >
+      </div>
+    </footer>
+  </body>
+</html>

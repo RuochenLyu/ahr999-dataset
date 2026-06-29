@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import '../styles/global.css';
 import datasetJson from '../../public/datasets/ahr999.json';
+import { docNav } from '../lib/docNav';
 
 export interface Props {
   lang: 'en' | 'zh';
@@ -9,6 +10,7 @@ export interface Props {
 
 const { lang } = Astro.props;
 const isEn = lang === 'en';
+const nav = docNav(lang);
 
 type Row = {
   date: string;
@@ -30,10 +32,10 @@ type Tier = { label: string; cls: string; hint: string };
 
 const t = isEn
   ? {
-      metaTitle: (ahr: string, tier: string) =>
-        `AHR999 = ${ahr} · ${tier} · ahr999-dataset`,
-      metaDesc:
-        'Open, daily-updated AHR999 (BTC hoarding index) dataset. Self-computed from Binance BTCUSDT daily closes. Free JSON/CSV downloads.',
+      title: 'AHR999 Index Dataset · Daily Bitcoin DCA Valuation Signal',
+      metaDesc: (ahr: string, tier: string) =>
+        `Open, daily-updated AHR999 index for Bitcoin DCA timing. Latest AHR999 = ${ahr} (${tier}). Free JSON, CSV & API, computed from Binance BTCUSDT closes.`,
+      heroH1Html: `The open <em>AHR999</em> index — daily Bitcoin DCA valuation dataset`,
 
       liveLabel: (date: string) => `Updated · UTC ${date}`,
       liveTitle: 'Automated daily update at 00:37 UTC',
@@ -83,6 +85,7 @@ const t = isEn
       codeLabel: 'curl · jq · latest reading',
       codeCopy: 'click to copy',
       codeCopied: 'copied ✓',
+      copyAria: 'Copy the curl command to clipboard',
 
       aboutEyebrow: 'What is AHR999?',
       aboutTitleHtml: `<em>AHR999</em> is a BTC dollar-cost-averaging heuristic.`,
@@ -100,10 +103,10 @@ const t = isEn
       footerUpdated: (d: string, n: string) => `updated ${d} · ${n} rows`,
     }
   : {
-      metaTitle: (ahr: string, tier: string) =>
-        `AHR999 = ${ahr} · ${tier} · ahr999 数据集`,
-      metaDesc:
-        '开源、每日自动更新的 AHR999（BTC 囤币指标）数据集，基于 Binance BTCUSDT 日 K 自算。JSON / CSV 免费下载。',
+      title: 'AHR999 指标数据集 · 比特币定投估值信号（每日更新）',
+      metaDesc: (ahr: string, tier: string) =>
+        `开源、每日更新的 AHR999 指标数据集，用于比特币定投（DCA）估值。最新 AHR999 = ${ahr}（${tier}）。提供免费 JSON、CSV 与 API，基于 Binance BTCUSDT 日 K 自算。`,
+      heroH1Html: `开源 <em>AHR999</em> 指标 — 每日更新的比特币定投估值数据集`,
 
       liveLabel: (date: string) => `更新于 UTC ${date}`,
       liveTitle: '每日 UTC 00:37 自动更新',
@@ -153,6 +156,7 @@ const t = isEn
       codeLabel: 'curl · jq · 最新值',
       codeCopy: '点击复制',
       codeCopied: '已复制',
+      copyAria: '复制 curl 命令到剪贴板',
 
       aboutEyebrow: '关于 AHR999',
       aboutTitleHtml: `<em>AHR999</em> 是 BTC 的定投参考指标。`,
@@ -219,7 +223,9 @@ const apiCatalogUrl = new URL('/.well-known/api-catalog', siteOrigin)
   .toString();
 const llmsTxtUrl = new URL('/llms.txt', siteOrigin).toString();
 const sitemapUrl = new URL('/sitemap.xml', siteOrigin).toString();
-const socialTitle = t.metaTitle(fmtAhr(latest?.ahr999 ?? null), tier.label);
+const latestAhrStr = fmtAhr(latest?.ahr999 ?? null);
+const socialTitle = t.title;
+const metaDescription = t.metaDesc(latestAhrStr, tier.label);
 const ogImageAlt = isEn
   ? 'AHR999 open dataset brand card: daily open BTC accumulation index.'
   : 'AHR999 开放数据集品牌卡：日度 BTC 开盘累积指数。';
@@ -313,6 +319,23 @@ const datasetStructuredData = JSON.stringify({
     },
   ],
 });
+
+const websiteStructuredData = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'AHR999 Dataset',
+  alternateName: 'ahr999-dataset',
+  url: siteHomeUrl,
+  inLanguage: ['en', 'zh-Hans'],
+  description:
+    'Open, daily-updated AHR999 Bitcoin hoarding index dataset for dollar-cost-averaging research, published as JSON, CSV and a read-only API.',
+  license: 'https://creativecommons.org/licenses/by/4.0/',
+  publisher: {
+    '@type': 'Organization',
+    name: 'ahr999-dataset contributors',
+    url: 'https://github.com/RuochenLyu/ahr999-dataset',
+  },
+});
 ---
 
 <!doctype html>
@@ -321,16 +344,16 @@ const datasetStructuredData = JSON.stringify({
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <title>{socialTitle}</title>
-    <meta name="description" content={t.metaDesc} />
+    <meta name="description" content={metaDescription} />
     <meta name="theme-color" content="#09090b" />
     <meta name="color-scheme" content="dark" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="canonical" href={pageUrl} />
     <meta property="og:title" content={socialTitle} />
-    <meta property="og:description" content={t.metaDesc} />
+    <meta property="og:description" content={metaDescription} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={pageUrl} />
     <meta property="og:site_name" content="ahr999 dataset" />
@@ -341,7 +364,7 @@ const datasetStructuredData = JSON.stringify({
     <meta property="og:image:alt" content={ogImageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={socialTitle} />
-    <meta name="twitter:description" content={t.metaDesc} />
+    <meta name="twitter:description" content={metaDescription} />
     <meta name="twitter:image" content={ogImageUrl} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" type="application/xml" href={sitemapUrl} />
@@ -371,6 +394,7 @@ const datasetStructuredData = JSON.stringify({
     />
     <link rel="alternate" hreflang="en" href={enUrl} />
     <link rel="alternate" hreflang="zh-Hans" href={zhUrl} />
+    <link rel="alternate" hreflang="x-default" href={enUrl} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       rel="preconnect"
@@ -384,6 +408,7 @@ const datasetStructuredData = JSON.stringify({
       crossorigin="anonymous"
     />
     <script type="application/ld+json" set:html={datasetStructuredData}></script>
+    <script type="application/ld+json" set:html={websiteStructuredData}></script>
   </head>
   <body>
     <div class="page-bg" aria-hidden="true">
@@ -437,7 +462,7 @@ const datasetStructuredData = JSON.stringify({
             <span>{t.heroEyebrow}</span>
             <span
               class="mono"
-              style="color: var(--fg-dimmer); margin-left: 4px;"
+              style="color: var(--fg-dim); margin-left: 4px;"
             >
               {t.heroUtc(latestDate)}
             </span>
@@ -456,6 +481,8 @@ const datasetStructuredData = JSON.stringify({
               </span>
             </span>
           </div>
+
+          <h1 class="hero-title reveal reveal-3" set:html={t.heroH1Html}></h1>
 
           <p class="hero-lead reveal reveal-3" set:html={t.heroLeadHtml}></p>
         </div>
@@ -632,7 +659,13 @@ const datasetStructuredData = JSON.stringify({
           </div>
         </div>
 
-        <div class="code-card" id="copy-card">
+        <div
+          class="code-card"
+          id="copy-card"
+          role="button"
+          tabindex="0"
+          aria-label={t.copyAria}
+        >
           <div class="code-label">
             <span class="lhs">
               <span class="traffic" aria-hidden="true">
@@ -703,6 +736,12 @@ const datasetStructuredData = JSON.stringify({
 
     <!-- FOOTER -->
     <footer class="site-footer">
+      <nav class="footer-nav" aria-label={isEn ? 'documentation' : '文档'}>
+        <a href={nav.methodology.href}>{nav.methodology.label}</a>
+        <a href={nav.dataFormat.href}>{nav.dataFormat.label}</a>
+        <a href={nav.api.href}>{nav.api.label}</a>
+        <a href={nav.faq.href}>{nav.faq.label}</a>
+      </nav>
       <div class="footer-strip">
         <span class="footer-brand">
           <span class="brand-mark">◐</span>
@@ -775,7 +814,7 @@ const datasetStructuredData = JSON.stringify({
       const COLOR_GRID = 'rgba(63, 63, 70, 0.35)';
       const COLOR_FG = '#fafafa';
       const COLOR_FG_MUTED = '#a1a1aa';
-      const COLOR_FG_DIM = '#71717a';
+      const COLOR_FG_DIM = '#7e7e88';
 
       const el = document.getElementById('chart') as HTMLDivElement | null;
       if (!el) {
@@ -1175,7 +1214,7 @@ const datasetStructuredData = JSON.stringify({
       const copyCard = document.getElementById('copy-card');
       const copySrc = document.getElementById('copy-src');
       if (copyCard && copySrc) {
-        copyCard.addEventListener('click', async () => {
+        const doCopy = async (): Promise<void> => {
           try {
             const text = (copySrc as HTMLElement).dataset.copy ?? '';
             await navigator.clipboard.writeText(text);
@@ -1192,6 +1231,13 @@ const datasetStructuredData = JSON.stringify({
             }, 1600);
           } catch {
             /* clipboard blocked; no-op */
+          }
+        };
+        copyCard.addEventListener('click', () => void doCopy());
+        copyCard.addEventListener('keydown', (event: KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            void doCopy();
           }
         });
       }

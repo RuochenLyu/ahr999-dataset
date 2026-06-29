@@ -17,7 +17,7 @@ oldest → newest. Pretty-printed with 2-space indent + trailing newline so
 [
   {
     "date": "2017-08-17",
-    "close": 4261.48,
+    "close": 4285.08,
     "ma200": null,
     "ahr999": null,
     "quantile5y": null,
@@ -43,7 +43,7 @@ newline:
 
 ```
 date,close,ma200,ahr999,quantile5y,windowKind
-2017-08-17,4261.48,,,,insufficient_samples
+2017-08-17,4285.08,,,,insufficient_samples
 ...
 2026-04-19,73801.79,86578.65964999999,0.4116636687277032,0.13917808219178082,rolling_5y
 ```

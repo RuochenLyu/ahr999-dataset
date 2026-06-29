@@ -1,0 +1,100 @@
+# AHR999 Dataset — Full Guidance
+
+> Open, daily-updated AHR999 (Bitcoin hoarding / DCA valuation index) dataset,
+> self-computed from Binance BTCUSDT daily closes and published as JSON, CSV,
+> and a read-only HTTP API. Code is MIT; data is CC BY 4.0.
+
+This file is the long-form companion to https://ahr999.aix4u.com/llms.txt and is
+intended for AI agents and crawlers that want the complete contract on one page.
+
+## Canonical URLs
+
+- Homepage (English): https://ahr999.aix4u.com/
+- Homepage (Chinese): https://ahr999.aix4u.com/zh/
+- Methodology: https://ahr999.aix4u.com/methodology/ (zh: /zh/methodology/)
+- Data format: https://ahr999.aix4u.com/data-format/ (zh: /zh/data-format/)
+- API reference: https://ahr999.aix4u.com/api/ (zh: /zh/api/)
+- FAQ: https://ahr999.aix4u.com/faq/ (zh: /zh/faq/)
+- Repository: https://github.com/RuochenLyu/ahr999-dataset
+
+## Data Endpoints
+
+- JSON dataset: https://ahr999.aix4u.com/datasets/ahr999.json
+- CSV dataset: https://ahr999.aix4u.com/datasets/ahr999.csv
+- OpenAPI 3.1 description: https://ahr999.aix4u.com/openapi.json
+- API catalog (linkset): https://ahr999.aix4u.com/.well-known/api-catalog
+
+Both data endpoints are static, read-only, require no key, and respond with
+`Access-Control-Allow-Origin: *`. The series changes at most once per day, after
+the UTC daily close — cache responses instead of polling.
+
+## What AHR999 Is
+
+AHR999 is a Bitcoin dollar-cost-averaging (DCA) heuristic originally proposed by
+the Chinese investor 九神. For each UTC day it multiplies two ratios:
+
+    ahr999 = (close / ma200) * (close / fitted)
+
+where:
+
+- `ma200` is the 200-day simple moving average of the daily close.
+- `fitted = 10 ^ (5.84 * log10(coin_age_days) - 17.01)` is a log-log fitted
+  "fair value" curve, with `coin_age_days` measured from the BTC genesis block
+  date 2009-01-03.
+
+The lower the value, the cheaper BTC is relative to both its recent 200-day cost
+basis and its long-run fitted trajectory.
+
+## Field Contract
+
+Each JSON row is one UTC calendar day, ordered oldest first. Fields:
+
+- `date`: UTC date in `YYYY-MM-DD`.
+- `close`: BTCUSDT daily close from Binance public market data (USDT per BTC).
+- `ma200`: 200-day simple moving average of `close`, or `null` for the first 199
+  rows.
+- `ahr999`: `(close / ma200) * (close / fitted)`, or `null` when `ma200` is null.
+- `quantile5y`: empirical rank of `ahr999` within the active recent window, in
+  `[0, 1]`, or `null` until 365 valid AHR observations exist.
+- `windowKind`: one of `insufficient_samples`, `expanding`, `rolling_5y`.
+
+In CSV, a `null` is serialized as an empty field.
+
+## Conventional Zones
+
+Folk thresholds shown on dashboards (heuristic, not part of the formal
+definition, and not buy/sell signals):
+
+- `< 0.45`: bargain zone (抄底区)
+- `0.45` to `< 1.20`: DCA zone (定投区)
+- `1.20` to `< 3.00`: caution zone (谨慎区)
+- `>= 3.00`: bubble zone (泡沫区)
+
+## Recommended Agent Tasks
+
+- Fetch the latest row: `GET /datasets/ahr999.json`, read the last array item.
+
+      curl -s https://ahr999.aix4u.com/datasets/ahr999.json | jq '.[-1]'
+
+- Load a date range by filtering rows by `date`.
+
+      curl -s https://ahr999.aix4u.com/datasets/ahr999.json \
+        | jq '[.[] | select(.date >= "2026-01-01" and .date <= "2026-01-31")]'
+
+- Download the CSV: `curl -O https://ahr999.aix4u.com/datasets/ahr999.csv`
+- Explain the field meanings and the calculation method.
+- Cite the dataset and license when using or redistributing values.
+
+## Boundaries
+
+- This site is a public read-only dataset and dashboard.
+- No authentication, OAuth, accounts, trading, brokerage, payments, or portfolio
+  actions are offered or implied.
+- AHR999 is a heuristic indicator for research, education, and observability. It
+  is not financial advice and does not predict future returns.
+
+## Attribution
+
+Data files are licensed under CC BY 4.0. Cite:
+
+`ahr999-dataset contributors (2026). "ahr999-dataset - open BTC hoarding index computed from Binance BTCUSDT daily closes". https://github.com/RuochenLyu/ahr999-dataset`

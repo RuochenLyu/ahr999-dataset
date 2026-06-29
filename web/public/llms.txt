@@ -14,6 +14,15 @@
 - CSV dataset: https://ahr999.aix4u.com/datasets/ahr999.csv
 - OpenAPI description: https://ahr999.aix4u.com/openapi.json
 
+## Documentation Pages
+
+- Methodology (formula, constants, quantile): https://ahr999.aix4u.com/methodology/
+- Data format (JSON/CSV field reference): https://ahr999.aix4u.com/data-format/
+- API reference (endpoints, CORS, examples): https://ahr999.aix4u.com/api/
+- FAQ: https://ahr999.aix4u.com/faq/
+- Chinese versions live under the `/zh/` prefix, e.g. https://ahr999.aix4u.com/zh/methodology/
+- Full agent guidance: https://ahr999.aix4u.com/llms-full.txt
+
 ## Dataset Shape
 
 Each JSON row is one UTC calendar day, ordered oldest first. Fields:

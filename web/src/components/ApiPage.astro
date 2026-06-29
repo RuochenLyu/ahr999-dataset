@@ -1,0 +1,175 @@
+---
+import DocLayout from '../layouts/DocLayout.astro';
+import RelatedNav from './RelatedNav.astro';
+import { docNav } from '../lib/docNav';
+
+export interface Props {
+  lang: 'en' | 'zh';
+}
+
+const { lang } = Astro.props;
+const isEn = lang === 'en';
+const nav = docNav(lang);
+
+const path = isEn ? '/api/' : '/zh/api/';
+const altPath = isEn ? '/zh/api/' : '/api/';
+const canonical = `https://ahr999.aix4u.com${path}`;
+
+const title = isEn
+  ? 'AHR999 API · Free Read-Only Bitcoin Index Endpoints'
+  : 'AHR999 API · 免费只读的比特币指标接口';
+const description = isEn
+  ? 'Free, read-only AHR999 API — fetch the daily Bitcoin DCA index as JSON or CSV over HTTPS. No key, CORS-enabled, with curl and JavaScript examples.'
+  : '免费、只读的 AHR999 API —— 通过 HTTPS 以 JSON 或 CSV 获取每日比特币定投指标。无需密钥、支持 CORS，附 curl 与 JavaScript 示例及 OpenAPI 3.1 描述。';
+const eyebrow = 'API';
+const heading = isEn
+  ? 'The open <em>AHR999</em> API'
+  : '开放的 <em>AHR999</em> API';
+const lead = isEn
+  ? 'Two static endpoints, no key, no rate gate, <code>Access-Control-Allow-Origin: *</code>. Fetch the full AHR999 history as JSON or CSV straight from a browser, a shell, or a notebook.'
+  : '两个静态端点，无需密钥、无速率门槛，<code>Access-Control-Allow-Origin: *</code>。可直接从浏览器、命令行或 notebook 取到完整的 AHR999 历史，JSON 或 CSV 均可。';
+
+const breadcrumb = [
+  { label: nav.home.label, href: nav.home.href },
+  { label: nav.api.label },
+];
+
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: isEn ? 'AHR999 dataset API reference' : 'AHR999 数据集 API 参考',
+    description,
+    inLanguage: isEn ? 'en' : 'zh-Hans',
+    url: canonical,
+    mainEntityOfPage: canonical,
+    license: 'https://creativecommons.org/licenses/by/4.0/',
+    author: {
+      '@type': 'Organization',
+      name: 'ahr999-dataset contributors',
+      url: 'https://github.com/RuochenLyu/ahr999-dataset',
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebAPI',
+    name: 'AHR999 Dataset API',
+    description: isEn
+      ? 'Public read-only endpoints for the daily AHR999 BTC hoarding index, served as static JSON and CSV with open CORS.'
+      : '每日 AHR999 BTC 囤币指标的公开只读端点，以静态 JSON 与 CSV 提供并开放 CORS。',
+    url: canonical,
+    documentation: 'https://ahr999.aix4u.com/openapi.json',
+    termsOfService: 'https://github.com/RuochenLyu/ahr999-dataset',
+    inLanguage: isEn ? 'en' : 'zh-Hans',
+    provider: {
+      '@type': 'Organization',
+      name: 'ahr999-dataset contributors',
+      url: 'https://github.com/RuochenLyu/ahr999-dataset',
+    },
+  },
+];
+
+const articleHtml = isEn
+  ? `
+<h2 id="overview">Overview</h2>
+<p>The dataset is served as plain static files over HTTPS from <code>https://ahr999.aix4u.com</code>. Every endpoint is <strong>read-only</strong>, needs <strong>no API key</strong>, and is returned with <code>Access-Control-Allow-Origin: *</code>, so you can fetch it directly from a browser. The series changes at most once per day — please cache responses instead of polling.</p>
+<div class="doc-note">The data is for research, education, and observability. It is <strong>not financial advice</strong> and does not predict future returns.</div>
+
+<h2 id="endpoints">Endpoints</h2>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>Method</th><th>Path</th><th>Returns</th></tr></thead>
+<tbody>
+<tr><td><code>GET</code></td><td><a href="https://ahr999.aix4u.com/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a></td><td>Full history as a JSON array, oldest first.</td></tr>
+<tr><td><code>GET</code></td><td><a href="https://ahr999.aix4u.com/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a></td><td>The same rows as CSV, UTF-8, with a header row.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Each JSON element follows the <a href="${nav.dataFormat.href}">data-format contract</a>: <code>date</code>, <code>close</code>, <code>ma200</code>, <code>ahr999</code>, <code>quantile5y</code>, <code>windowKind</code>.</p>
+
+<h2 id="examples">Examples</h2>
+<h3>Latest reading</h3>
+<pre><code>curl -s https://ahr999.aix4u.com/datasets/ahr999.json | jq '.[-1]'</code></pre>
+<h3>A date range</h3>
+<pre><code>curl -s https://ahr999.aix4u.com/datasets/ahr999.json \\
+  | jq '[.[] | select(.date >= "2026-01-01" and .date &lt;= "2026-01-31")]'</code></pre>
+<h3>Download the CSV</h3>
+<pre><code>curl -O https://ahr999.aix4u.com/datasets/ahr999.csv</code></pre>
+<h3>From JavaScript</h3>
+<pre><code>const rows = await fetch(
+  "https://ahr999.aix4u.com/datasets/ahr999.json",
+).then((r) => r.json());
+
+const latest = rows.at(-1);
+console.log(latest.ahr999, latest.windowKind);</code></pre>
+
+<h2 id="discovery">Machine-readable discovery</h2>
+<ul>
+<li><a href="https://ahr999.aix4u.com/openapi.json"><code>/openapi.json</code></a> — OpenAPI 3.1 description of both endpoints.</li>
+<li><a href="https://ahr999.aix4u.com/.well-known/api-catalog"><code>/.well-known/api-catalog</code></a> — an API-catalog linkset pointing at the OpenAPI doc.</li>
+<li><a href="https://ahr999.aix4u.com/llms.txt"><code>/llms.txt</code></a> and <a href="https://ahr999.aix4u.com/llms-full.txt"><code>/llms-full.txt</code></a> — guidance for AI agents and crawlers.</li>
+</ul>
+
+<h2 id="cors">CORS &amp; caching</h2>
+<p>Responses are static and cross-origin readable. Because the series only changes after the daily UTC close, you can treat any response as valid for the rest of the UTC day. When you redistribute values, cite the dataset under CC BY 4.0 — see the <a href="${nav.faq.href}">FAQ</a>.</p>
+`
+  : `
+<h2 id="overview">概览</h2>
+<p>数据集以纯静态文件通过 HTTPS 从 <code>https://ahr999.aix4u.com</code> 提供。每个端点都是<strong>只读</strong>、<strong>无需密钥</strong>，并返回 <code>Access-Control-Allow-Origin: *</code>，因此可直接从浏览器获取。该序列每天最多变化一次 —— 请缓存响应，而非轮询。</p>
+<div class="doc-note">数据用于研究、教育与可观测性，<strong>不构成投资建议</strong>，也不预测未来收益。</div>
+
+<h2 id="endpoints">端点</h2>
+<div class="doc-table-wrap">
+<table>
+<thead><tr><th>方法</th><th>路径</th><th>返回</th></tr></thead>
+<tbody>
+<tr><td><code>GET</code></td><td><a href="https://ahr999.aix4u.com/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a></td><td>完整历史，JSON 数组，从旧到新。</td></tr>
+<tr><td><code>GET</code></td><td><a href="https://ahr999.aix4u.com/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a></td><td>相同的行，CSV，UTF-8，带表头。</td></tr>
+</tbody>
+</table>
+</div>
+<p>每个 JSON 元素遵循<a href="${nav.dataFormat.href}">数据格式契约</a>：<code>date</code>、<code>close</code>、<code>ma200</code>、<code>ahr999</code>、<code>quantile5y</code>、<code>windowKind</code>。</p>
+
+<h2 id="examples">示例</h2>
+<h3>最新数值</h3>
+<pre><code>curl -s https://ahr999.aix4u.com/datasets/ahr999.json | jq '.[-1]'</code></pre>
+<h3>某个日期范围</h3>
+<pre><code>curl -s https://ahr999.aix4u.com/datasets/ahr999.json \\
+  | jq '[.[] | select(.date >= "2026-01-01" and .date &lt;= "2026-01-31")]'</code></pre>
+<h3>下载 CSV</h3>
+<pre><code>curl -O https://ahr999.aix4u.com/datasets/ahr999.csv</code></pre>
+<h3>从 JavaScript</h3>
+<pre><code>const rows = await fetch(
+  "https://ahr999.aix4u.com/datasets/ahr999.json",
+).then((r) => r.json());
+
+const latest = rows.at(-1);
+console.log(latest.ahr999, latest.windowKind);</code></pre>
+
+<h2 id="discovery">机器可读的发现入口</h2>
+<ul>
+<li><a href="https://ahr999.aix4u.com/openapi.json"><code>/openapi.json</code></a> —— 两个端点的 OpenAPI 3.1 描述。</li>
+<li><a href="https://ahr999.aix4u.com/.well-known/api-catalog"><code>/.well-known/api-catalog</code></a> —— 指向 OpenAPI 文档的 API 目录 linkset。</li>
+<li><a href="https://ahr999.aix4u.com/llms.txt"><code>/llms.txt</code></a> 与 <a href="https://ahr999.aix4u.com/llms-full.txt"><code>/llms-full.txt</code></a> —— 面向 AI 代理与爬虫的说明。</li>
+</ul>
+
+<h2 id="cors">CORS 与缓存</h2>
+<p>响应是静态的、可跨域读取。由于序列只在每日 UTC 收盘后变化，你可以把任一响应视作在当日 UTC 剩余时间内有效。转发数值时，请按 CC BY 4.0 引用本数据集 —— 见<a href="${nav.faq.href}">常见问题</a>。</p>
+`;
+---
+
+<DocLayout
+  lang={lang}
+  title={title}
+  description={description}
+  path={path}
+  altPath={altPath}
+  eyebrow={eyebrow}
+  heading={heading}
+  lead={lead}
+  breadcrumb={breadcrumb}
+  structuredData={structuredData}
+>
+  <Fragment set:html={articleHtml} />
+  <RelatedNav slot="related" lang={lang} current="api" />
+</DocLayout>

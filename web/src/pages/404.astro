@@ -1,0 +1,35 @@
+---
+import DocLayout from '../layouts/DocLayout.astro';
+import RelatedNav from '../components/RelatedNav.astro';
+import { docNav } from '../lib/docNav';
+
+const nav = docNav('en');
+const breadcrumb = [
+  { label: nav.home.label, href: nav.home.href },
+  { label: 'not found' },
+];
+const bodyHtml = `
+<p>The page you asked for isn't here — but the dataset is. Everything below still works:</p>
+<ul>
+<li><a href="/">AHR999 index &amp; downloads</a> — the live reading, chart, and JSON / CSV.</li>
+<li><a href="/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a> and <a href="/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a> — the raw data.</li>
+<li><a href="/methodology/">Methodology</a>, <a href="/data-format/">data format</a>, <a href="/api/">API</a>, and <a href="/faq/">FAQ</a>.</li>
+</ul>
+`;
+---
+
+<DocLayout
+  lang="en"
+  noindex
+  title="404 · Page not found — AHR999 dataset"
+  description="That page does not exist. Browse the AHR999 index, dataset downloads, API, and methodology instead."
+  eyebrow="404"
+  heading="This page <em>drifted</em> off-chain"
+  lead="A wrong turn — the link is broken or the page has moved."
+  path="/"
+  altPath="/zh/"
+  breadcrumb={breadcrumb}
+>
+  <Fragment set:html={bodyHtml} />
+  <RelatedNav slot="related" lang="en" current="home" />
+</DocLayout>

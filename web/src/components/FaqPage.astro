@@ -1,0 +1,176 @@
+---
+import DocLayout from '../layouts/DocLayout.astro';
+import RelatedNav from './RelatedNav.astro';
+import { docNav } from '../lib/docNav';
+
+export interface Props {
+  lang: 'en' | 'zh';
+}
+
+const { lang } = Astro.props;
+const isEn = lang === 'en';
+const nav = docNav(lang);
+
+const path = isEn ? '/faq/' : '/zh/faq/';
+const altPath = isEn ? '/zh/faq/' : '/faq/';
+const canonical = `https://ahr999.aix4u.com${path}`;
+
+const title = isEn
+  ? 'AHR999 FAQ · What It Is, How to Use It, Data & License'
+  : 'AHR999 常见问题 · 是什么、怎么用、数据与许可';
+const description = isEn
+  ? 'Answers to common AHR999 questions: what the index is, how it is calculated, what the zones mean, update frequency, data source, downloads, and citation.'
+  : '关于 AHR999 的常见问题解答：指标是什么、如何计算、抄底 / 定投 / 谨慎 / 泡沫各区含义、更新频率、数据来源、下载方式与引用规范。';
+const eyebrow = isEn ? 'FAQ' : '常见问题';
+const heading = isEn
+  ? 'Frequently asked questions'
+  : '常见问题';
+const lead = isEn
+  ? 'Short answers to the questions people ask most about the <em>AHR999</em> index and this dataset.'
+  : '关于 <em>AHR999</em> 指标与本数据集，大家最常问的问题与简短回答。';
+
+const breadcrumb = [
+  { label: nav.home.label, href: nav.home.href },
+  { label: nav.faq.label },
+];
+
+type Faq = { q: string; a: string; text: string };
+
+const faqItems: Faq[] = isEn
+  ? [
+      {
+        q: 'What is the AHR999 index?',
+        a: `AHR999 is a Bitcoin dollar-cost-averaging (DCA) heuristic proposed by the Chinese investor 九神. It multiplies two ratios — today's close ÷ its 200-day moving average, and today's close ÷ a log-log fitted fair value — into a single number. The lower the value, the cheaper BTC is relative to both its recent cost basis and its long-run trajectory.`,
+        text: `AHR999 is a Bitcoin dollar-cost-averaging heuristic proposed by the Chinese investor 九神. It multiplies today's close over its 200-day moving average by today's close over a log-log fitted fair value. The lower the value, the cheaper BTC is relative to both its recent cost basis and its long-run trajectory.`,
+      },
+      {
+        q: 'How is AHR999 calculated?',
+        a: `<code>ahr999 = (close / ma200) × (close / fitted)</code>, where <code>fitted = 10^(5.84·log10(coin_age_days) − 17.01)</code>. Every value here is recomputed daily from Binance BTCUSDT daily closes by open-source TypeScript. The full derivation, constants, and quantile rules are on the <a href="${nav.methodology.href}">methodology page</a>.`,
+        text: `ahr999 = (close / ma200) × (close / fitted), where fitted = 10^(5.84·log10(coin_age_days) − 17.01). Every value is recomputed daily from Binance BTCUSDT daily closes by open-source TypeScript. The full derivation is on the methodology page.`,
+      },
+      {
+        q: 'What do the bargain / DCA / caution / bubble zones mean?',
+        a: `Conventional heuristic thresholds: below <strong>0.45</strong> is the bargain zone, <strong>0.45–1.20</strong> the DCA zone, <strong>1.20–3.00</strong> caution, above <strong>3.00</strong> bubble. These are folk thresholds, not part of the formal definition, and they are not buy or sell signals.`,
+        text: `Conventional heuristic thresholds: below 0.45 is the bargain zone, 0.45 to 1.20 the DCA zone, 1.20 to 3.00 caution, above 3.00 bubble. These are folk thresholds, not part of the formal definition, and not buy or sell signals.`,
+      },
+      {
+        q: 'Is AHR999 financial advice?',
+        a: `No. The dataset is for research, education, and observability only. It does not predict future returns, and nothing here is financial advice.`,
+        text: `No. The dataset is for research, education, and observability only. It does not predict future returns, and nothing here is financial advice.`,
+      },
+      {
+        q: 'How often is the data updated?',
+        a: `Once per day. A GitHub Action runs at <strong>00:37 UTC</strong> — 37 minutes after Binance closes the previous UTC day's bar — recomputes the full series, and redeploys the site.`,
+        text: `Once per day. A GitHub Action runs at 00:37 UTC, 37 minutes after Binance closes the previous UTC day's bar, recomputes the full series, and redeploys the site.`,
+      },
+      {
+        q: 'Where does the price data come from?',
+        a: `Binance public market data: <code>GET /api/v3/klines</code> with <code>symbol=BTCUSDT</code>, <code>interval=1d</code>. Only the daily close is kept; the repository does not redistribute raw OHLCV data.`,
+        text: `Binance public market data: GET /api/v3/klines with symbol=BTCUSDT, interval=1d. Only the daily close is kept; the repository does not redistribute raw OHLCV data.`,
+      },
+      {
+        q: 'How do I download or call the data?',
+        a: `Fetch <a href="https://ahr999.aix4u.com/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a> or <a href="https://ahr999.aix4u.com/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a> directly — no key, CORS open. curl, jq, and JavaScript examples are on the <a href="${nav.api.href}">API page</a>.`,
+        text: `Fetch /datasets/ahr999.json or /datasets/ahr999.csv directly — no key, CORS open. curl, jq, and JavaScript examples are on the API page.`,
+      },
+      {
+        q: 'What license is the data under, and how do I cite it?',
+        a: `Data files are <strong>CC BY 4.0</strong>; the code is MIT. Cite: <em>ahr999-dataset contributors (2026). "ahr999-dataset — open BTC hoarding index computed from Binance BTCUSDT daily closes". https://github.com/RuochenLyu/ahr999-dataset</em>`,
+        text: `Data files are CC BY 4.0; the code is MIT. Cite: ahr999-dataset contributors (2026). "ahr999-dataset — open BTC hoarding index computed from Binance BTCUSDT daily closes". https://github.com/RuochenLyu/ahr999-dataset`,
+      },
+      {
+        q: 'Why does this differ slightly from 9992100.xyz or other AHR999 sites?',
+        a: `Small daily divergences (≤ 0.02 absolute) come from different UTC-adjacent cutoffs and undocumented price sources. Every implementation should agree on the <strong>regime</strong> on any given day; don't chase exact numerical parity across unrelated sites.`,
+        text: `Small daily divergences (≤ 0.02 absolute) come from different UTC-adjacent cutoffs and undocumented price sources. Every implementation should agree on the regime on any given day; don't chase exact numerical parity across unrelated sites.`,
+      },
+    ]
+  : [
+      {
+        q: 'AHR999 指标是什么？',
+        a: `AHR999 是由投资者九神提出的比特币定投（DCA）参考指标。它把两个比值相乘 —— 当日收盘 ÷ 200 日均价，以及当日收盘 ÷ log-log 拟合公允价 —— 得到一个数。值越低，表示 BTC 相对其近期成本与长期轨迹都更便宜。`,
+        text: `AHR999 是由投资者九神提出的比特币定投参考指标。它把当日收盘除以 200 日均价，再乘以当日收盘除以 log-log 拟合公允价，得到一个数。值越低，表示 BTC 相对其近期成本与长期轨迹都更便宜。`,
+      },
+      {
+        q: 'AHR999 怎么计算？',
+        a: `<code>ahr999 = (close / ma200) × (close / fitted)</code>，其中 <code>fitted = 10^(5.84·log10(coin_age_days) − 17.01)</code>。本站每个数值都由开源 TypeScript 每日从 Binance BTCUSDT 日 K 重算。完整推导、常数与分位规则见<a href="${nav.methodology.href}">方法论页面</a>。`,
+        text: `ahr999 = (close / ma200) × (close / fitted)，其中 fitted = 10^(5.84·log10(coin_age_days) − 17.01)。本站每个数值都由开源 TypeScript 每日从 Binance BTCUSDT 日 K 重算。完整推导见方法论页面。`,
+      },
+      {
+        q: '抄底 / 定投 / 谨慎 / 泡沫各区是什么意思？',
+        a: `常见经验阈值：<strong>0.45</strong> 以下为抄底区，<strong>0.45–1.20</strong> 为定投区，<strong>1.20–3.00</strong> 为谨慎区，<strong>3.00</strong> 以上为泡沫区。这些是经验性阈值，不属于公式的正式定义，也不是买卖信号。`,
+        text: `常见经验阈值：0.45 以下为抄底区，0.45 至 1.20 为定投区，1.20 至 3.00 为谨慎区，3.00 以上为泡沫区。这些是经验性阈值，不属于公式正式定义，也不是买卖信号。`,
+      },
+      {
+        q: 'AHR999 是投资建议吗？',
+        a: `不是。本数据集仅用于研究、教育与可观测性。它不预测未来收益，本站内容也不构成任何投资建议。`,
+        text: `不是。本数据集仅用于研究、教育与可观测性。它不预测未来收益，本站内容也不构成任何投资建议。`,
+      },
+      {
+        q: '数据多久更新一次？',
+        a: `每天一次。一个 GitHub Action 在 <strong>UTC 00:37</strong> 运行 —— 即 Binance 收掉上一个 UTC 日 K 后 37 分钟 —— 重算整条序列并重新部署站点。`,
+        text: `每天一次。一个 GitHub Action 在 UTC 00:37 运行，即 Binance 收掉上一个 UTC 日 K 后 37 分钟，重算整条序列并重新部署站点。`,
+      },
+      {
+        q: '价格数据来自哪里？',
+        a: `来自 Binance 公开市场数据：<code>GET /api/v3/klines</code>，参数 <code>symbol=BTCUSDT</code>、<code>interval=1d</code>。只保留日收盘价；本仓库不转发原始 OHLCV 数据。`,
+        text: `来自 Binance 公开市场数据：GET /api/v3/klines，参数 symbol=BTCUSDT、interval=1d。只保留日收盘价；本仓库不转发原始 OHLCV 数据。`,
+      },
+      {
+        q: '怎么下载或调用数据？',
+        a: `直接获取 <a href="https://ahr999.aix4u.com/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a> 或 <a href="https://ahr999.aix4u.com/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a> —— 无需密钥，CORS 开放。curl、jq 与 JavaScript 示例见 <a href="${nav.api.href}">API 页面</a>。`,
+        text: `直接获取 /datasets/ahr999.json 或 /datasets/ahr999.csv —— 无需密钥，CORS 开放。curl、jq 与 JavaScript 示例见 API 页面。`,
+      },
+      {
+        q: '数据使用什么许可？如何引用？',
+        a: `数据文件采用 <strong>CC BY 4.0</strong>；代码采用 MIT。引用格式：<em>ahr999-dataset contributors (2026). "ahr999-dataset — open BTC hoarding index computed from Binance BTCUSDT daily closes". https://github.com/RuochenLyu/ahr999-dataset</em>`,
+        text: `数据文件采用 CC BY 4.0；代码采用 MIT。引用格式：ahr999-dataset contributors (2026). "ahr999-dataset — open BTC hoarding index computed from Binance BTCUSDT daily closes". https://github.com/RuochenLyu/ahr999-dataset`,
+      },
+      {
+        q: '为什么本站与 9992100.xyz 等其他 AHR999 站点略有差异？',
+        a: `每日的小幅分歧（绝对值 ≤ 0.02）来自不同的 UTC 邻近截止点与未公开的价格来源。各实现在任一天都应在<strong>档位</strong>上一致；不要去追不同站点之间的数值完全相等。`,
+        text: `每日的小幅分歧（绝对值 ≤ 0.02）来自不同的 UTC 邻近截止点与未公开的价格来源。各实现在任一天都应在档位上一致；不要去追不同站点之间的数值完全相等。`,
+      },
+    ];
+
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    inLanguage: isEn ? 'en' : 'zh-Hans',
+    url: canonical,
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.text,
+      },
+    })),
+  },
+];
+---
+
+<DocLayout
+  lang={lang}
+  title={title}
+  description={description}
+  path={path}
+  altPath={altPath}
+  eyebrow={eyebrow}
+  heading={heading}
+  lead={lead}
+  breadcrumb={breadcrumb}
+  structuredData={structuredData}
+>
+  <div class="doc-faq">
+    {
+      faqItems.map((item) => (
+        <details>
+          <summary>{item.q}</summary>
+          <div class="faq-a" set:html={item.a} />
+        </details>
+      ))
+    }
+  </div>
+  <RelatedNav slot="related" lang={lang} current="faq" />
+</DocLayout>
