@@ -3,35 +3,46 @@
  * One-line, dismissible hint shown only to visitors whose browser prefers
  * Chinese while they are on an English page. Pure client-side: crawlers see
  * a hidden element and no redirect, so hreflang stays the routing authority.
+ * Traditional-Chinese browsers (zh-TW / zh-HK / zh-MO / zh-Hant) are pointed
+ * at the zh-Hant edition, everyone else at zh-Hans.
  */
 export interface Props {
-  /** The Chinese twin of the current page, e.g. '/zh/methodology/'. */
+  /** The Simplified-Chinese twin of the current page, e.g. '/zh/methodology/'. */
   zhHref: string;
+  /** The Traditional-Chinese twin, e.g. '/zh-hant/methodology/'. */
+  hantHref: string;
 }
-const { zhHref } = Astro.props;
+const { zhHref, hantHref } = Astro.props;
 ---
 
-<div class="lang-hint" id="lang-hint" hidden lang="zh-Hans" role="status">
-  <span class="lang-hint-text">本站提供中文版。</span>
-  <a class="lang-hint-link" href={zhHref} hreflang="zh-Hans">切换到中文 →</a>
-  <button type="button" class="lang-hint-close" aria-label="关闭提示">×</button>
+<div class="lang-hint" id="lang-hint" hidden role="status">
+  <span class="lang-hint-variant" data-variant="hans" lang="zh-Hans" hidden>
+    <span class="lang-hint-text">本站提供中文版。</span>
+    <a class="lang-hint-link" href={zhHref} hreflang="zh-Hans">切换到中文 →</a>
+  </span>
+  <span class="lang-hint-variant" data-variant="hant" lang="zh-Hant" hidden>
+    <span class="lang-hint-text">本站提供繁體中文版。</span>
+    <a class="lang-hint-link" href={hantHref} hreflang="zh-Hant">切換到繁體中文 →</a>
+  </span>
+  <button type="button" class="lang-hint-close" aria-label="关闭提示 / 關閉提示">×</button>
 </div>
 
 <script>
   const KEY = 'ahr999:lang-hint-dismissed';
   const el = document.getElementById('lang-hint');
-  const prefersZh = (navigator.languages ?? [navigator.language]).some((l) =>
-    /^zh\b/i.test(l),
-  );
+  const langs = navigator.languages ?? [navigator.language];
+  const preferred = langs.find((l) => /^zh\b/i.test(l));
   const onEnglishPage = !document.documentElement.lang.startsWith('zh');
-  if (el && prefersZh && onEnglishPage && !localStorage.getItem(KEY)) {
+  if (el && preferred && onEnglishPage && !localStorage.getItem(KEY)) {
+    const wantsHant = /^zh-(hant|tw|hk|mo)/i.test(preferred);
+    el.querySelector(`[data-variant="${wantsHant ? 'hant' : 'hans'}"]`)?.removeAttribute('hidden');
     el.removeAttribute('hidden');
     el.querySelector('.lang-hint-close')?.addEventListener('click', () => {
       localStorage.setItem(KEY, '1');
       el.setAttribute('hidden', '');
     });
-    el.querySelector('.lang-hint-link')?.addEventListener('click', () => {
-      localStorage.setItem(KEY, '1');
-    });
+    for (const link of el.querySelectorAll('.lang-hint-link')) {
+      link.addEventListener('click', () => localStorage.setItem(KEY, '1'));
+    }
   }
 </script>

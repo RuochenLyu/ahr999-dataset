@@ -1,7 +1,8 @@
 ---
 import DocLayout from '../layouts/DocLayout.astro';
 import RelatedNav from '../components/RelatedNav.astro';
-import { docNav } from '../lib/docNav';
+import { docNav, docPaths } from '../lib/docNav';
+import { hant } from '../lib/hant';
 
 const nav = docNav('en');
 const breadcrumb = [
@@ -10,15 +11,17 @@ const breadcrumb = [
 ];
 // GitHub Pages serves a single root 404.html, so the Chinese variant is
 // rendered inline and revealed client-side for /zh/ paths.
-const bodyHtml = `
-<div class="notfound-zh" lang="zh-Hans" hidden>
+const zhBlock = `
 <p>你访问的页面不存在，但数据集还在。以下入口均可用：</p>
 <ul>
 <li><a href="/zh/">AHR999 指标与下载</a> —— 最新读数、图表与 JSON / CSV。</li>
 <li><a href="/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a> 与 <a href="/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a> —— 原始数据。</li>
 <li><a href="/zh/methodology/">方法论</a>、<a href="/zh/data-format/">数据格式</a>、<a href="/zh/api/">API</a> 与 <a href="/zh/faq/">常见问题</a>。</li>
-</ul>
-</div>
+</ul>`;
+const hantBlock = hant(zhBlock).replaceAll('href="/zh/', 'href="/zh-hant/');
+const bodyHtml = `
+<div class="notfound-zh" lang="zh-Hans" hidden>${zhBlock}</div>
+<div class="notfound-hant" lang="zh-Hant" hidden>${hantBlock}</div>
 <div class="notfound-en">
 <p>The page you asked for isn't here — but the dataset is. Everything below still works:</p>
 <ul>
@@ -38,8 +41,7 @@ const bodyHtml = `
   eyebrow="404"
   heading="This page <em>drifted</em> off-chain"
   lead="A wrong turn — the link is broken or the page has moved."
-  path="/"
-  altPath="/zh/"
+  paths={docPaths('home')}
   breadcrumb={breadcrumb}
 >
   <Fragment set:html={bodyHtml} />
@@ -47,18 +49,21 @@ const bodyHtml = `
 </DocLayout>
 
 <script>
-  if (location.pathname.startsWith('/zh/') || location.pathname === '/zh') {
-    document.documentElement.lang = 'zh-Hans';
-    document.querySelector('.notfound-zh')?.removeAttribute('hidden');
+  const p = location.pathname;
+  const variant = /^\/zh-hant(\/|$)/.test(p)
+    ? 'hant'
+    : /^\/zh(\/|$)/.test(p)
+      ? 'zh'
+      : null;
+  if (variant) {
+    document.documentElement.lang = variant === 'hant' ? 'zh-Hant' : 'zh-Hans';
+    document.querySelector(`.notfound-${variant}`)?.removeAttribute('hidden');
     document.querySelector('.notfound-en')?.setAttribute('hidden', '');
     const title = document.querySelector('.doc-title');
-    if (title) title.textContent = '这个页面不存在';
+    if (title) title.textContent = variant === 'hant' ? '這個頁面不存在' : '这个页面不存在';
     const lead = document.querySelector('.doc-lead');
-    if (lead) lead.textContent = '链接可能已失效或页面已迁移。';
-    const langToggle = document.querySelector<HTMLAnchorElement>('.lang-toggle');
-    if (langToggle) {
-      langToggle.href = '/';
-      langToggle.textContent = 'EN';
-    }
+    if (lead)
+      lead.textContent =
+        variant === 'hant' ? '連結可能已失效或頁面已遷移。' : '链接可能已失效或页面已迁移。';
   }
 </script>

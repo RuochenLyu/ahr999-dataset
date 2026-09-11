@@ -1,0 +1,65 @@
+---
+import type { Lang } from '../lib/docNav';
+
+/**
+ * Language switcher: a native <details> menu (works without JS, keyboard
+ * accessible), closed by a tiny script on outside click / Escape.
+ */
+export interface Props {
+  lang: Lang;
+  /** This document's path in every language. */
+  paths: Record<Lang, string>;
+}
+const { lang, paths } = Astro.props;
+
+const items: Array<{ lang: Lang; tag: string; short: string; name: string }> = [
+  { lang: 'en', tag: 'en', short: 'EN', name: 'English' },
+  { lang: 'zh', tag: 'zh-Hans', short: '简', name: '简体中文' },
+  { lang: 'zh-hant', tag: 'zh-Hant', short: '繁', name: '繁體中文' },
+];
+const current = items.find((i) => i.lang === lang) ?? items[0]!;
+const summaryLabel =
+  lang === 'en' ? 'Language' : lang === 'zh' ? '语言' : '語言';
+---
+
+<details class="lang-menu">
+  <summary aria-label={summaryLabel} title={summaryLabel}>
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.5"></circle>
+      <path d="M1.5 8h13M8 1.5c2.2 2 2.2 11 0 13M8 1.5c-2.2 2-2.2 11 0 13"></path>
+    </svg>
+    <span class="lang-menu-current" lang={current.tag}>{current.short}</span>
+  </summary>
+  <ul role="list">
+    {
+      items.map((item) => (
+        <li>
+          <a
+            href={paths[item.lang]}
+            hreflang={item.tag}
+            lang={item.tag}
+            rel="alternate"
+            aria-current={item.lang === lang ? 'page' : undefined}
+          >
+            <span class="lang-menu-dot" aria-hidden="true" />
+            {item.name}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</details>
+
+<script>
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('.lang-menu')) {
+    document.addEventListener('click', (e) => {
+      if (menu.open && !menu.contains(e.target as Node)) menu.open = false;
+    });
+    menu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.open) {
+        menu.open = false;
+        menu.querySelector('summary')?.focus();
+      }
+    });
+  }
+</script>

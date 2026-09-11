@@ -56,9 +56,10 @@ const docSources: Record<string, string[]> = {
 };
 
 type SitemapPage = {
-  /** English path; the Chinese twin lives under /zh. */
+  /** English path; the Chinese twins live under /zh and /zh-hant. */
   en: string;
   zh: string;
+  hant: string;
   changefreq: string;
   priority: string;
   /** Key into docSources; omitted => dataset date. */
@@ -70,10 +71,11 @@ type SitemapPage = {
 // <link rel> tags and the Dataset JSON-LD, but listing them here only
 // produces "crawled – not indexed" noise in Search Console.
 const sitemapPages: SitemapPage[] = [
-  { en: "/", zh: "/zh/", changefreq: "daily", priority: "1.0" },
+  { en: "/", zh: "/zh/", hant: "/zh-hant/", changefreq: "daily", priority: "1.0" },
   {
     en: "/methodology/",
     zh: "/zh/methodology/",
+    hant: "/zh-hant/methodology/",
     changefreq: "monthly",
     priority: "0.7",
     source: "methodology",
@@ -81,6 +83,7 @@ const sitemapPages: SitemapPage[] = [
   {
     en: "/data-format/",
     zh: "/zh/data-format/",
+    hant: "/zh-hant/data-format/",
     changefreq: "monthly",
     priority: "0.7",
     source: "dataFormat",
@@ -88,6 +91,7 @@ const sitemapPages: SitemapPage[] = [
   {
     en: "/api/",
     zh: "/zh/api/",
+    hant: "/zh-hant/api/",
     changefreq: "monthly",
     priority: "0.7",
     source: "api",
@@ -95,6 +99,7 @@ const sitemapPages: SitemapPage[] = [
   {
     en: "/faq/",
     zh: "/zh/faq/",
+    hant: "/zh-hant/faq/",
     changefreq: "monthly",
     priority: "0.7",
     source: "faq",
@@ -162,6 +167,7 @@ function buildSitemap(latestDate: string): string {
     [
       ["en", page.en],
       ["zh-Hans", page.zh],
+      ["zh-Hant", page.hant],
       ["x-default", page.en],
     ]
       .map(
@@ -175,6 +181,11 @@ function buildSitemap(latestDate: string): string {
       { loc: page.en, priority: page.priority, page },
       {
         loc: page.zh,
+        priority: String(Math.max(0.1, Number(page.priority) - 0.1).toFixed(1)),
+        page,
+      },
+      {
+        loc: page.hant,
         priority: String(Math.max(0.1, Number(page.priority) - 0.1).toFixed(1)),
         page,
       },

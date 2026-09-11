@@ -1,22 +1,22 @@
 ---
 import '../styles/global.css';
 import datasetJson from '../../public/datasets/ahr999.json';
-import { docNav } from '../lib/docNav';
+import { docNav, docPaths, langTag, ogLocale, type Lang } from '../lib/docNav';
+import { localize } from '../lib/hant';
 import LangHint from '../components/LangHint.astro';
+import LangMenu from '../components/LangMenu.astro';
 
 type Row = { date: string };
 type Crumb = { label: string; href?: string };
 
 export interface Props {
-  lang: 'en' | 'zh';
+  lang: Lang;
   /** Full <title> / og:title text. */
   title: string;
   /** Meta + og description. */
   description: string;
-  /** Canonical path for THIS language, e.g. '/methodology/'. */
-  path: string;
-  /** The equivalent path in the OTHER language, e.g. '/zh/methodology/'. */
-  altPath: string;
+  /** This document's path in every language; the current one is canonical. */
+  paths: Record<Lang, string>;
   /** Small mono kicker above the page title. */
   eyebrow: string;
   /** Visible page title (may contain <em> markup). */
@@ -35,8 +35,7 @@ const {
   lang,
   title,
   description,
-  path,
-  altPath,
+  paths,
   eyebrow,
   heading,
   lead,
@@ -48,6 +47,7 @@ const {
 const isEn = lang === 'en';
 const siteOrigin = 'https://ahr999.aix4u.com';
 const nav = docNav(lang);
+const zhs = (s: string): string => localize(lang, s);
 
 const dataset = datasetJson as Row[];
 const latestDate = dataset[dataset.length - 1]?.date ?? '—';
@@ -55,24 +55,26 @@ const rowCount = dataset.length;
 
 const abs = (p: string): string => new URL(p, `${siteOrigin}/`).toString();
 
-const canonicalUrl = abs(path);
-const enHref = abs(isEn ? path : altPath);
-const zhHref = abs(isEn ? altPath : path);
-const homeHref = isEn ? '/' : '/zh/';
+const canonicalUrl = abs(paths[lang]);
+const enHref = abs(paths.en);
+const zhHref = abs(paths.zh);
+const hantHref = abs(paths['zh-hant']);
+const homeHref = nav.home.href;
 const ogImageUrl = abs('/og-image.png');
 const sitemapUrl = abs('/sitemap.xml');
 
-const altLangHref = altPath;
-const altLangLabel = isEn ? '中' : 'EN';
-const langAria = isEn ? 'Switch to Chinese' : '切换到英文';
 const liveTitle = isEn
   ? 'Automated daily update at 00:37 UTC'
-  : '每日 UTC 00:37 自动更新';
-const liveLabel = isEn ? `Updated · UTC ${latestDate}` : `更新于 UTC ${latestDate}`;
-const footerLicense = isEn ? 'code MIT · data CC-BY-4.0' : '代码 MIT · 数据 CC-BY-4.0';
+  : zhs('每日 UTC 00:37 自动更新');
+const liveLabel = isEn
+  ? `Updated · UTC ${latestDate}`
+  : zhs(`更新于 UTC ${latestDate}`);
+const footerLicense = isEn
+  ? 'code MIT · data CC-BY-4.0'
+  : zhs('代码 MIT · 数据 CC-BY-4.0');
 const footerUpdated = isEn
   ? `updated ${latestDate} · ${rowCount.toLocaleString()} rows`
-  : `${latestDate} 更新 · 共 ${rowCount.toLocaleString()} 行`;
+  : zhs(`${latestDate} 更新 · 共 ${rowCount.toLocaleString()} 行`);
 const currentYear = new Date().getUTCFullYear();
 
 // Breadcrumb structured data — built from the visible trail.
@@ -90,7 +92,7 @@ const allLd = [breadcrumbLd, ...structuredData];
 ---
 
 <!doctype html>
-<html lang={isEn ? 'en' : 'zh-Hans'}>
+<html lang={langTag(lang)}>
   <head>
     <meta charset="utf-8" />
     <meta
@@ -108,8 +110,12 @@ const allLd = [breadcrumbLd, ...structuredData];
     <meta property="og:type" content="article" />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content="ahr999 dataset" />
-    <meta property="og:locale" content={isEn ? 'en_US' : 'zh_CN'} />
-    <meta property="og:locale:alternate" content={isEn ? 'zh_CN' : 'en_US'} />
+    <meta property="og:locale" content={ogLocale(lang)} />
+    {
+      (['en', 'zh', 'zh-hant'] as Lang[])
+        .filter((l) => l !== lang)
+        .map((l) => <meta property="og:locale:alternate" content={ogLocale(l)} />)
+    }
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
@@ -126,6 +132,7 @@ const allLd = [breadcrumbLd, ...structuredData];
         <>
           <link rel="alternate" hreflang="en" href={enHref} />
           <link rel="alternate" hreflang="zh-Hans" href={zhHref} />
+          <link rel="alternate" hreflang="zh-Hant" href={hantHref} />
           <link rel="alternate" hreflang="x-default" href={enHref} />
         </>
       )
@@ -158,7 +165,7 @@ const allLd = [breadcrumbLd, ...structuredData];
       <div class="bg-glow-alt"></div>
     </div>
 
-    <a class="skip-link" href="#main">{isEn ? 'Skip to content' : '跳到正文'}</a>
+    <a class="skip-link" href="#main">{isEn ? 'Skip to content' : zhs('跳到正文')}</a>
     <header class="site-header">
       <a class="brand" href={homeHref} aria-label="ahr999 dataset — home">
         <span class="brand-mark">◐</span>
@@ -180,12 +187,7 @@ const allLd = [breadcrumbLd, ...structuredData];
         <a href={nav.faq.href} class="nav-link nav-hide-md">
           {nav.faq.navLabel}
         </a>
-        <a
-          href={altLangHref}
-          class="lang-toggle"
-          aria-label={langAria}
-          hreflang={isEn ? 'zh-Hans' : 'en'}>{altLangLabel}</a
-        >
+        <LangMenu lang={lang} paths={paths} />
         <a
           href="https://github.com/RuochenLyu/ahr999-dataset"
           class="nav-pill"
@@ -201,7 +203,7 @@ const allLd = [breadcrumbLd, ...structuredData];
         </a>
       </nav>
     </header>
-    {isEn && !noindex && <LangHint zhHref={altPath} />}
+    {isEn && !noindex && <LangHint zhHref={paths.zh} hantHref={paths['zh-hant']} />}
 
     <main id="main">
       <div class="doc-shell">

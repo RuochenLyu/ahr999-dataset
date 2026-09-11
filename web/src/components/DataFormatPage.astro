@@ -1,18 +1,21 @@
 ---
 import DocLayout from '../layouts/DocLayout.astro';
 import RelatedNav from './RelatedNav.astro';
-import { docNav } from '../lib/docNav';
+import { docNav, docPaths, langTag, type Lang } from '../lib/docNav';
+import { localize } from '../lib/hant';
 
 export interface Props {
-  lang: 'en' | 'zh';
+  lang: Lang;
 }
 
 const { lang } = Astro.props;
 const isEn = lang === 'en';
 const nav = docNav(lang);
 
-const path = isEn ? '/data-format/' : '/zh/data-format/';
-const altPath = isEn ? '/zh/data-format/' : '/data-format/';
+const paths = docPaths('dataFormat');
+const path = paths[lang];
+// zh-Hant copy is derived from the zh-Hans strings at build time.
+const z = <T,>(v: T): T => localize(lang, v);
 const canonical = `https://ahr999.aix4u.com${path}`;
 
 const title = isEn
@@ -40,7 +43,7 @@ const structuredData = [
     '@type': 'TechArticle',
     headline: isEn ? 'AHR999 dataset data format' : 'AHR999 数据集数据格式',
     description,
-    inLanguage: isEn ? 'en' : 'zh-Hans',
+    inLanguage: langTag(lang),
     url: canonical,
     mainEntityOfPage: canonical,
     about: {
@@ -183,16 +186,15 @@ const articleHtml = isEn
 
 <DocLayout
   lang={lang}
-  title={title}
-  description={description}
-  path={path}
-  altPath={altPath}
-  eyebrow={eyebrow}
-  heading={heading}
-  lead={lead}
+  title={z(title)}
+  description={z(description)}
+  paths={paths}
+  eyebrow={z(eyebrow)}
+  heading={z(heading)}
+  lead={z(lead)}
   breadcrumb={breadcrumb}
-  structuredData={structuredData}
+  structuredData={z(structuredData)}
 >
-  <Fragment set:html={articleHtml} />
+  <Fragment set:html={z(articleHtml)} />
   <RelatedNav slot="related" lang={lang} current="dataFormat" />
 </DocLayout>

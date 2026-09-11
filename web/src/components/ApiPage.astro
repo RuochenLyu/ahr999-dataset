@@ -1,18 +1,21 @@
 ---
 import DocLayout from '../layouts/DocLayout.astro';
 import RelatedNav from './RelatedNav.astro';
-import { docNav } from '../lib/docNav';
+import { docNav, docPaths, langTag, type Lang } from '../lib/docNav';
+import { localize } from '../lib/hant';
 
 export interface Props {
-  lang: 'en' | 'zh';
+  lang: Lang;
 }
 
 const { lang } = Astro.props;
 const isEn = lang === 'en';
 const nav = docNav(lang);
 
-const path = isEn ? '/api/' : '/zh/api/';
-const altPath = isEn ? '/zh/api/' : '/api/';
+const paths = docPaths('api');
+const path = paths[lang];
+// zh-Hant copy is derived from the zh-Hans strings at build time.
+const z = <T,>(v: T): T => localize(lang, v);
 const canonical = `https://ahr999.aix4u.com${path}`;
 
 const title = isEn
@@ -40,7 +43,7 @@ const structuredData = [
     '@type': 'TechArticle',
     headline: isEn ? 'AHR999 dataset API reference' : 'AHR999 数据集 API 参考',
     description,
-    inLanguage: isEn ? 'en' : 'zh-Hans',
+    inLanguage: langTag(lang),
     url: canonical,
     mainEntityOfPage: canonical,
     about: {
@@ -66,7 +69,7 @@ const structuredData = [
     url: canonical,
     documentation: 'https://ahr999.aix4u.com/openapi.json',
     termsOfService: 'https://github.com/RuochenLyu/ahr999-dataset',
-    inLanguage: isEn ? 'en' : 'zh-Hans',
+    inLanguage: langTag(lang),
     provider: {
       '@type': 'Organization',
       name: 'ahr999-dataset contributors',
@@ -166,16 +169,15 @@ console.log(latest.ahr999, latest.windowKind);</code></pre>
 
 <DocLayout
   lang={lang}
-  title={title}
-  description={description}
-  path={path}
-  altPath={altPath}
-  eyebrow={eyebrow}
-  heading={heading}
-  lead={lead}
+  title={z(title)}
+  description={z(description)}
+  paths={paths}
+  eyebrow={z(eyebrow)}
+  heading={z(heading)}
+  lead={z(lead)}
   breadcrumb={breadcrumb}
-  structuredData={structuredData}
+  structuredData={z(structuredData)}
 >
-  <Fragment set:html={articleHtml} />
+  <Fragment set:html={z(articleHtml)} />
   <RelatedNav slot="related" lang={lang} current="api" />
 </DocLayout>
