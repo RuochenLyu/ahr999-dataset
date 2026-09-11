@@ -56,9 +56,6 @@ const t = isEn
         `Open, daily-updated AHR999 index for Bitcoin DCA timing. Latest AHR999 = ${ahr} (${tier}). Free JSON, CSV & API, computed from Binance BTCUSDT closes.`,
       heroH1Html: `The open <em>AHR999</em> index — daily Bitcoin DCA valuation dataset`,
 
-      liveLabel: (date: string) => `Updated · UTC ${date}`,
-      liveTitle: 'Automated daily update at 00:37 UTC',
-
       heroEyebrow: 'AHR999 — latest reading',
       heroUtc: (d: string) => `UTC ${d}`,
       tiers: {
@@ -73,14 +70,15 @@ const t = isEn
       mBtcClose: 'BTC close',
       mBtcCloseTag: 'USD · 1D',
       mMa: 'MA200',
-      mMaTag: '200D · SMA',
+      mMaTag: 'USD',
       mQ: '5y quantile',
-      mDelta: '7d Δ ahr',
-      mDeltaTag: 'wk change',
+      mDelta: '7d change',
+      mDeltaTag: 'ahr999',
 
       ctaCsvLabel: 'Download CSV',
       ctaJsonLabel: 'JSON',
-      ctaNote: (rows: string) => `${rows} rows · CC-BY-4.0`,
+      ctaNote: (rows: string, since: string) =>
+        `${rows} daily rows since ${since}`,
 
       legendBtc: 'BTC price · left',
       legendMa: '200-day DCA cost · left',
@@ -92,7 +90,7 @@ const t = isEn
 
       dataEyebrow: 'Recent 30 days',
       dataTitle: 'Every UTC close, in order.',
-      dataCtaHistory: (n: string, kb: string) => `Download full JSON · ${n} rows · ${kb} kB`,
+      dataCtaApi: 'Query the full history via the API',
       colDate: 'Date',
       colClose: 'Close',
       colMa: 'MA200',
@@ -102,7 +100,7 @@ const t = isEn
 
       codeEyebrow: 'One-liner',
       codeTitle: 'Fetch the latest reading.',
-      codeLabel: 'curl · jq · latest reading',
+      codeLabel: 'curl · jq',
       codeCopy: 'click to copy',
       codeCopied: 'copied ✓',
       codeCopyFallback: 'selected · press ⌘C / Ctrl+C',
@@ -111,7 +109,7 @@ const t = isEn
       aboutEyebrow: 'What is AHR999?',
       aboutTitleHtml: `<em>AHR999</em> is a BTC dollar-cost-averaging heuristic.`,
       aboutBody1Html: `Originally proposed by the Chinese investor <strong>九神</strong>. The formula multiplies two ratios: today's close ÷ <strong>200-day moving average</strong>, and today's close ÷ <strong>log-log fitted fair value</strong>. The lower the value, the better the entry.`,
-      aboutBody2Html: `Conventional thresholds: below <strong>0.45</strong> is the bargain zone, <strong>0.45 – 1.20</strong> is the DCA zone, <strong>1.20 – 3.00</strong> is caution, above <strong>3.00</strong> is bubble. Every value here is recomputed daily from Binance BTCUSDT closes by open-source TypeScript code in this repository — fully traceable. Read the <a href="${nav.methodology.href}">methodology</a> for the exact formula and constants, or the <a href="${nav.faq.href}">FAQ</a> for how people use it.`,
+      aboutBody2Html: `The four zones on the scale below — bargain, DCA, caution, bubble — are folk thresholds from the community, not part of the formula. Read the <a href="${nav.methodology.href}">methodology</a> for the exact constants, or the <a href="${nav.faq.href}">FAQ</a> for how people use it.`,
       contextEyebrow: 'Historical context',
       contextTitle: 'Where today sits.',
       contextProse: (c: ContextStats) =>
@@ -138,16 +136,12 @@ const t = isEn
         `AHR999 regime scale: today's reading ${v} sits in the ${tier}.`,
 
       footerLicense: 'code MIT · data CC-BY-4.0',
-      footerUpdated: (d: string, n: string) => `updated ${d} · ${n} rows`,
     }
   : localize(lang, {
       title: 'AHR999 囤币指标数据集 · 比特币定投估值信号（每日更新）',
       metaDesc: (ahr: string, tier: string) =>
         `开源、每日更新的 AHR999 囤币指标数据集，用于比特币定投（DCA）估值。最新 AHR999 = ${ahr}（${tier}）。提供免费 JSON、CSV 与 API，基于 Binance BTCUSDT 日 K 自算。`,
       heroH1Html: `开源 <em>AHR999</em> 囤币指标 — 每日更新的比特币定投估值数据集`,
-
-      liveLabel: (date: string) => `更新于 UTC ${date}`,
-      liveTitle: '每日 UTC 00:37 自动更新',
 
       heroEyebrow: 'AHR999 · 最新数值',
       heroUtc: (d: string) => `UTC ${d}`,
@@ -163,14 +157,14 @@ const t = isEn
       mBtcClose: 'BTC 收盘价',
       mBtcCloseTag: 'USD · 1D',
       mMa: 'MA200',
-      mMaTag: '200 日均价',
+      mMaTag: 'USD',
       mQ: '5 年分位',
-      mDelta: '7 日 Δ',
+      mDelta: '7 日变化',
       mDeltaTag: 'ahr999',
 
       ctaCsvLabel: '下载 CSV',
       ctaJsonLabel: 'JSON',
-      ctaNote: (rows: string) => `${rows} 行 · CC-BY-4.0`,
+      ctaNote: (rows: string, since: string) => `${rows} 行 · 自 ${since} 起`,
 
       legendBtc: 'BTC 价格 · 左轴',
       legendMa: '200 日定投成本 · 左轴',
@@ -182,7 +176,7 @@ const t = isEn
 
       dataEyebrow: '最近 30 日',
       dataTitle: '逐日 UTC 收盘价。',
-      dataCtaHistory: (n: string, kb: string) => `下载完整 JSON · ${n} 行 · ${kb} kB`,
+      dataCtaApi: '通过 API 获取完整历史',
       colDate: '日期',
       colClose: '收盘价',
       colMa: 'MA200',
@@ -192,7 +186,7 @@ const t = isEn
 
       codeEyebrow: '一行命令',
       codeTitle: '一行命令取最新值。',
-      codeLabel: 'curl · jq · 最新值',
+      codeLabel: 'curl · jq',
       codeCopy: '点击复制',
       codeCopied: '已复制',
       codeCopyFallback: '已选中 · 请按 ⌘C / Ctrl+C',
@@ -201,7 +195,7 @@ const t = isEn
       aboutEyebrow: '关于 AHR999',
       aboutTitleHtml: `<em>AHR999</em> 是 BTC 的定投参考指标。`,
       aboutBody1Html: `由投资者<strong>九神</strong>最先提出。公式是两个比值相乘：当日收盘 ÷ <strong>200 日均价</strong>，再乘以当日收盘 ÷ <strong>log-log 拟合公允价</strong>。值越低，定投越划算。`,
-      aboutBody2Html: `经验阈值：<strong>0.45</strong> 以下为抄底区，<strong>0.45 – 1.20</strong> 为定投区，<strong>1.20 – 3.00</strong> 为谨慎区，<strong>3.00</strong> 以上为泡沫区。本站数值由本仓库中的开源 TypeScript 代码每日从 Binance BTCUSDT 日 K 全量重算，逐行可追溯。完整公式与常数见<a href="${nav.methodology.href}">方法论</a>，常见用法见<a href="${nav.faq.href}">常见问题</a>。`,
+      aboutBody2Html: `下方刻度上的四个区间 —— 抄底、定投、谨慎、泡沫 —— 是社区约定的经验阈值，不属于公式本身。完整常数见<a href="${nav.methodology.href}">方法论</a>，常见用法见<a href="${nav.faq.href}">常见问题</a>。`,
       contextEyebrow: '历史对照',
       contextTitle: '今天处在什么位置。',
       contextProse: (c: ContextStats) =>
@@ -228,7 +222,6 @@ const t = isEn
         `AHR999 档位刻度：今日读数 ${v}，处于${tier}。`,
 
       footerLicense: '代码 MIT · 数据 CC-BY-4.0',
-      footerUpdated: (d: string, n: string) => `${d} 更新 · 共 ${n} 行`,
     });
 
 function tierFor(value: number | null | undefined): Tier {
@@ -647,10 +640,6 @@ const webPageStructuredData = JSON.stringify({
         <span class="brand-slash">/</span>
         <span class="brand-sub">dataset</span>
       </a>
-      <div class="live-indicator" title={t.liveTitle}>
-        <span class="pulse"></span>
-        <span>{t.liveLabel(latestDate)}</span>
-      </div>
       <nav class="site-nav" aria-label="primary">
         <a href={nav.methodology.href} class="nav-link nav-hide-md">
           {nav.methodology.navLabel}
@@ -684,7 +673,6 @@ const webPageStructuredData = JSON.stringify({
       <section class="hero">
         <div class="hero-top">
           <div class="eyebrow reveal reveal-1">
-            <span class="label-dot"></span>
             <span>{t.heroEyebrow}</span>
             <span
               class="mono"
@@ -756,7 +744,7 @@ const webPageStructuredData = JSON.stringify({
             <span class="mono">{jsonSizeKb} kB</span>
           </a>
           <span class="mini-note">
-            {t.ctaNote(rowCount.toLocaleString())}
+            {t.ctaNote(rowCount.toLocaleString(), firstDate)}
           </span>
         </div>
 
@@ -770,10 +758,6 @@ const webPageStructuredData = JSON.stringify({
               <span
                 class="chip"
                 set:html={`<strong>BTCUSDT</strong> · 1d · <strong>${isEn ? 'log' : zhs('对数')}</strong>`}
-              ></span>
-              <span
-                class="chip"
-                set:html={`<strong>ahr999</strong> · ${isEn ? 'right axis' : zhs('右轴')}`}
               ></span>
             </div>
             <div
@@ -821,8 +805,7 @@ const webPageStructuredData = JSON.stringify({
         <header class="section-head">
           <div>
             <div class="eyebrow">
-              <span class="label-dot"></span>
-              <span>{t.contextEyebrow}</span>
+                <span>{t.contextEyebrow}</span>
             </div>
             <h2 class="section-title">{t.contextTitle}</h2>
           </div>
@@ -867,14 +850,13 @@ const webPageStructuredData = JSON.stringify({
         <header class="section-head">
           <div>
             <div class="eyebrow">
-              <span class="label-dot"></span>
-              <span>{t.dataEyebrow}</span>
+                <span>{t.dataEyebrow}</span>
             </div>
             <h2 class="section-title">{t.dataTitle}</h2>
           </div>
           <div>
-            <a href={datasetJsonUrl} class="btn-ghost" download>
-              <span>{t.dataCtaHistory(rowCount.toLocaleString(), String(jsonSizeKb))}</span>
+            <a href={nav.api.href} class="btn-ghost">
+              <span>{t.dataCtaApi}</span>
               <span aria-hidden="true">→</span>
             </a>
           </div>
@@ -901,14 +883,15 @@ const webPageStructuredData = JSON.stringify({
                       <td class="date">{row.date}</td>
                       <td class="num">{fmtUsd(row.close)}</td>
                       <td class="num hide-sm">{fmtUsd(row.ma200)}</td>
-                      <td class="num strong">{fmtAhr(row.ahr999)}</td>
+                      <td class={`num strong ${rowTier.cls}`}>
+                        {fmtAhr(row.ahr999)}
+                      </td>
                       <td class="num hide-sm">{fmtPct(row.quantile5y)}</td>
                       <td>
                         <span
                           class={`regime ${rowTier.cls}`}
                           title={rowTier.label}
                         >
-                          <span class="regime-dot" aria-hidden="true"></span>
                           <span class="regime-text">
                             {rowTier.key === 'na'
                               ? rowTier.label
@@ -930,8 +913,7 @@ const webPageStructuredData = JSON.stringify({
         <div class="section-head" style="margin-bottom: 1.5rem;">
           <div>
             <div class="eyebrow">
-              <span class="label-dot"></span>
-              <span>{t.codeEyebrow}</span>
+                <span>{t.codeEyebrow}</span>
             </div>
             <h2 class="section-title section-title-sm">{t.codeTitle}</h2>
           </div>
@@ -965,7 +947,6 @@ const webPageStructuredData = JSON.stringify({
       <section class="about-section">
         <div class="about-header">
           <div class="eyebrow">
-            <span class="label-dot"></span>
             <span>{t.aboutEyebrow}</span>
           </div>
           <h2 class="about-title" set:html={t.aboutTitleHtml}></h2>
@@ -998,10 +979,7 @@ const webPageStructuredData = JSON.stringify({
             {
               regimeSegments.map((seg) => (
                 <div class={seg.cls}>
-                  <span class="label-row">
-                    <span class="dot" aria-hidden="true" />
-                    <span class="label">{seg.label}</span>
-                  </span>
+                  <span class="label">{seg.label}</span>
                   <span class="range">{seg.range}</span>
                 </div>
               ))
@@ -1030,8 +1008,6 @@ const webPageStructuredData = JSON.stringify({
         <span>© {currentYear}</span>
         <span class="footer-sep" aria-hidden="true">·</span>
         <span>{t.footerLicense}</span>
-        <span class="footer-sep" aria-hidden="true">·</span>
-        <span>{t.footerUpdated(latestDate, rowCount.toLocaleString())}</span>
         <a
           href="https://github.com/RuochenLyu/ahr999-dataset"
           target="_blank"

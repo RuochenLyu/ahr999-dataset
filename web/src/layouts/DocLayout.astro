@@ -1,12 +1,10 @@
 ---
 import '../styles/global.css';
-import datasetJson from '../../public/datasets/ahr999.json';
 import { docNav, docPaths, langTag, ogLocale, type Lang } from '../lib/docNav';
 import { localize } from '../lib/hant';
 import LangHint from '../components/LangHint.astro';
 import LangMenu from '../components/LangMenu.astro';
 
-type Row = { date: string };
 type Crumb = { label: string; href?: string };
 
 export interface Props {
@@ -49,9 +47,6 @@ const siteOrigin = 'https://ahr999.aix4u.com';
 const nav = docNav(lang);
 const zhs = (s: string): string => localize(lang, s);
 
-const dataset = datasetJson as Row[];
-const latestDate = dataset[dataset.length - 1]?.date ?? '—';
-const rowCount = dataset.length;
 
 const abs = (p: string): string => new URL(p, `${siteOrigin}/`).toString();
 
@@ -63,18 +58,9 @@ const homeHref = nav.home.href;
 const ogImageUrl = abs('/og-image.png');
 const sitemapUrl = abs('/sitemap.xml');
 
-const liveTitle = isEn
-  ? 'Automated daily update at 00:37 UTC'
-  : zhs('每日 UTC 00:37 自动更新');
-const liveLabel = isEn
-  ? `Updated · UTC ${latestDate}`
-  : zhs(`更新于 UTC ${latestDate}`);
 const footerLicense = isEn
   ? 'code MIT · data CC-BY-4.0'
   : zhs('代码 MIT · 数据 CC-BY-4.0');
-const footerUpdated = isEn
-  ? `updated ${latestDate} · ${rowCount.toLocaleString()} rows`
-  : zhs(`${latestDate} 更新 · 共 ${rowCount.toLocaleString()} 行`);
 const currentYear = new Date().getUTCFullYear();
 
 // Breadcrumb structured data — built from the visible trail.
@@ -173,10 +159,6 @@ const allLd = [breadcrumbLd, ...structuredData];
         <span class="brand-slash">/</span>
         <span class="brand-sub">dataset</span>
       </a>
-      <div class="live-indicator" title={liveTitle}>
-        <span class="pulse"></span>
-        <span>{liveLabel}</span>
-      </div>
       <nav class="site-nav" aria-label="primary">
         <a href={nav.methodology.href} class="nav-link nav-hide-md">
           {nav.methodology.navLabel}
@@ -225,10 +207,7 @@ const allLd = [breadcrumbLd, ...structuredData];
         </nav>
 
         <header class="doc-header">
-          <div class="doc-eyebrow">
-            <span class="label-dot"></span>
-            <span>{eyebrow}</span>
-          </div>
+          <div class="doc-eyebrow">{eyebrow}</div>
           <h1 class="doc-title" set:html={heading}></h1>
           {lead && <p class="doc-lead" set:html={lead}></p>}
         </header>
@@ -253,8 +232,6 @@ const allLd = [breadcrumbLd, ...structuredData];
         <span>© {currentYear}</span>
         <span class="footer-sep" aria-hidden="true">·</span>
         <span>{footerLicense}</span>
-        <span class="footer-sep" aria-hidden="true">·</span>
-        <span>{footerUpdated}</span>
         <a
           href="https://github.com/RuochenLyu/ahr999-dataset"
           target="_blank"
