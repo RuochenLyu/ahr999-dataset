@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import datasetJson from '../../public/datasets/ahr999.json';
+import { docNav } from '../lib/docNav';
 
 type Row = { date: string };
 type Crumb = { label: string; href?: string };
@@ -45,6 +46,7 @@ const {
 
 const isEn = lang === 'en';
 const siteOrigin = 'https://ahr999.aix4u.com';
+const nav = docNav(lang);
 
 const dataset = datasetJson as Row[];
 const latestDate = dataset[dataset.length - 1]?.date ?? '—';
@@ -96,7 +98,7 @@ const allLd = [breadcrumbLd, ...structuredData];
     />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#09090b" />
+    <meta name="theme-color" content="#0b0a08" />
     <meta name="color-scheme" content="dark" />
     {noindex && <meta name="robots" content="noindex, follow" />}
     {!noindex && <link rel="canonical" href={canonicalUrl} />}
@@ -114,6 +116,7 @@ const allLd = [breadcrumbLd, ...structuredData];
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="sitemap" type="application/xml" href={sitemapUrl} />
     {
       !noindex && (
@@ -124,10 +127,18 @@ const allLd = [breadcrumbLd, ...structuredData];
         </>
       )
     }
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/instrument-serif-400-normal-latin.woff2"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/instrument-sans-400-600-normal-latin.woff2"
       crossorigin="anonymous"
     />
     {
@@ -140,11 +151,11 @@ const allLd = [breadcrumbLd, ...structuredData];
   <body>
     <div class="page-bg" aria-hidden="true">
       <div class="bg-grid"></div>
-      <div class="bg-scan"></div>
       <div class="bg-glow"></div>
       <div class="bg-glow-alt"></div>
     </div>
 
+    <a class="skip-link" href="#main">{isEn ? 'Skip to content' : '跳到正文'}</a>
     <header class="site-header">
       <a class="brand" href={homeHref} aria-label="ahr999 dataset — home">
         <span class="brand-mark">◐</span>
@@ -157,6 +168,15 @@ const allLd = [breadcrumbLd, ...structuredData];
         <span>{liveLabel}</span>
       </div>
       <nav class="site-nav" aria-label="primary">
+        <a href={nav.methodology.href} class="nav-link nav-hide-md">
+          {nav.methodology.navLabel}
+        </a>
+        <a href={nav.api.href} class="nav-link nav-hide-md">
+          {nav.api.navLabel}
+        </a>
+        <a href={nav.faq.href} class="nav-link nav-hide-md">
+          {nav.faq.navLabel}
+        </a>
         <a
           href={altLangHref}
           class="lang-toggle"
@@ -179,7 +199,7 @@ const allLd = [breadcrumbLd, ...structuredData];
       </nav>
     </header>
 
-    <main>
+    <main id="main">
       <div class="doc-shell">
         <nav class="doc-breadcrumb" aria-label="breadcrumb">
           {

@@ -8,13 +8,25 @@ const breadcrumb = [
   { label: nav.home.label, href: nav.home.href },
   { label: 'not found' },
 ];
+// GitHub Pages serves a single root 404.html, so the Chinese variant is
+// rendered inline and revealed client-side for /zh/ paths.
 const bodyHtml = `
+<div class="notfound-zh" lang="zh-Hans" hidden>
+<p>你访问的页面不存在，但数据集还在。以下入口均可用：</p>
+<ul>
+<li><a href="/zh/">AHR999 指标与下载</a> —— 最新读数、图表与 JSON / CSV。</li>
+<li><a href="/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a> 与 <a href="/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a> —— 原始数据。</li>
+<li><a href="/zh/methodology/">方法论</a>、<a href="/zh/data-format/">数据格式</a>、<a href="/zh/api/">API</a> 与 <a href="/zh/faq/">常见问题</a>。</li>
+</ul>
+</div>
+<div class="notfound-en">
 <p>The page you asked for isn't here — but the dataset is. Everything below still works:</p>
 <ul>
 <li><a href="/">AHR999 index &amp; downloads</a> — the live reading, chart, and JSON / CSV.</li>
 <li><a href="/datasets/ahr999.json"><code>/datasets/ahr999.json</code></a> and <a href="/datasets/ahr999.csv"><code>/datasets/ahr999.csv</code></a> — the raw data.</li>
 <li><a href="/methodology/">Methodology</a>, <a href="/data-format/">data format</a>, <a href="/api/">API</a>, and <a href="/faq/">FAQ</a>.</li>
 </ul>
+</div>
 `;
 ---
 
@@ -33,3 +45,20 @@ const bodyHtml = `
   <Fragment set:html={bodyHtml} />
   <RelatedNav slot="related" lang="en" current="home" />
 </DocLayout>
+
+<script>
+  if (location.pathname.startsWith('/zh/') || location.pathname === '/zh') {
+    document.documentElement.lang = 'zh-Hans';
+    document.querySelector('.notfound-zh')?.removeAttribute('hidden');
+    document.querySelector('.notfound-en')?.setAttribute('hidden', '');
+    const title = document.querySelector('.doc-title');
+    if (title) title.textContent = '这个页面不存在';
+    const lead = document.querySelector('.doc-lead');
+    if (lead) lead.textContent = '链接可能已失效或页面已迁移。';
+    const langToggle = document.querySelector<HTMLAnchorElement>('.lang-toggle');
+    if (langToggle) {
+      langToggle.href = '/';
+      langToggle.textContent = 'EN';
+    }
+  }
+</script>

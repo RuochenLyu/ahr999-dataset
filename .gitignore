@@ -9,6 +9,8 @@ web/.astro/
 web/public/datasets/
 web/public/sitemap.xml
 web/public/.well-known/agent-skills/index.json
+web/public/agent-skills/
+web/public/api-catalog
 
 # Temp files from atomic writes
 *.tmp

@@ -34,6 +34,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Full history so sitemap <lastmod> can use real commit dates
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v5
 

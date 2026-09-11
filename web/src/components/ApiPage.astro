@@ -43,6 +43,12 @@ const structuredData = [
     inLanguage: isEn ? 'en' : 'zh-Hans',
     url: canonical,
     mainEntityOfPage: canonical,
+    about: {
+      '@type': 'Dataset',
+      '@id': 'https://ahr999.aix4u.com/#dataset',
+      name: 'AHR999 Bitcoin Hoarding Index Dataset (daily, 2017–present)',
+      url: 'https://ahr999.aix4u.com/',
+    },
     license: 'https://creativecommons.org/licenses/by/4.0/',
     author: {
       '@type': 'Organization',
@@ -106,7 +112,7 @@ console.log(latest.ahr999, latest.windowKind);</code></pre>
 <h2 id="discovery">Machine-readable discovery</h2>
 <ul>
 <li><a href="https://ahr999.aix4u.com/openapi.json"><code>/openapi.json</code></a> — OpenAPI 3.1 description of both endpoints.</li>
-<li><a href="https://ahr999.aix4u.com/.well-known/api-catalog"><code>/.well-known/api-catalog</code></a> — an API-catalog linkset pointing at the OpenAPI doc.</li>
+<li><a href="https://ahr999.aix4u.com/api-catalog"><code>/api-catalog</code></a> — an API-catalog linkset pointing at the OpenAPI doc.</li>
 <li><a href="https://ahr999.aix4u.com/llms.txt"><code>/llms.txt</code></a> and <a href="https://ahr999.aix4u.com/llms-full.txt"><code>/llms-full.txt</code></a> — guidance for AI agents and crawlers.</li>
 </ul>
 
@@ -149,7 +155,7 @@ console.log(latest.ahr999, latest.windowKind);</code></pre>
 <h2 id="discovery">机器可读的发现入口</h2>
 <ul>
 <li><a href="https://ahr999.aix4u.com/openapi.json"><code>/openapi.json</code></a> —— 两个端点的 OpenAPI 3.1 描述。</li>
-<li><a href="https://ahr999.aix4u.com/.well-known/api-catalog"><code>/.well-known/api-catalog</code></a> —— 指向 OpenAPI 文档的 API 目录 linkset。</li>
+<li><a href="https://ahr999.aix4u.com/api-catalog"><code>/api-catalog</code></a> —— 指向 OpenAPI 文档的 API 目录 linkset。</li>
 <li><a href="https://ahr999.aix4u.com/llms.txt"><code>/llms.txt</code></a> 与 <a href="https://ahr999.aix4u.com/llms-full.txt"><code>/llms-full.txt</code></a> —— 面向 AI 代理与爬虫的说明。</li>
 </ul>
 

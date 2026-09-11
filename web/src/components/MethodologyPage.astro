@@ -17,14 +17,14 @@ const canonical = `https://ahr999.aix4u.com${path}`;
 
 const title = isEn
   ? 'AHR999 Methodology · Formula, Constants & 5-Year Quantile'
-  : 'AHR999 方法论 · 公式、常数与 5 年分位';
+  : 'AHR999 囤币指标计算方法 · 公式、常数与 5 年分位';
 const description = isEn
   ? 'How the AHR999 index is computed: the (close/MA200)×(close/fitted) formula, the fitted-curve constants, and the empirical 5-year quantile.'
-  : 'AHR999 指标的完整算法：(close/MA200)×(close/fitted) 公式、拟合公允价曲线常数，以及经验式 5 年分位，可由 Binance BTCUSDT 日 K 完整复现。';
+  : 'AHR999 囤币指标的完整算法：(close/MA200)×(close/fitted) 公式、拟合公允价曲线常数，以及经验式 5 年分位，可由 Binance BTCUSDT 日 K 完整复现。';
 const eyebrow = isEn ? 'Methodology' : '方法论';
 const heading = isEn
   ? 'How <em>AHR999</em> is computed'
-  : '<em>AHR999</em> 的计算方法';
+  : '<em>AHR999</em> 囤币指标的计算方法';
 const lead = isEn
   ? 'Every field in this dataset — <code>ma200</code>, <code>ahr999</code>, <code>quantile5y</code> — is recomputed daily from Binance BTCUSDT daily closes by open-source TypeScript. This page documents the exact formula, constants, and window rules, so any value is reproducible by hand.'
   : '本数据集中的每个字段 —— <code>ma200</code>、<code>ahr999</code>、<code>quantile5y</code> —— 都由开源 TypeScript 每日从 Binance BTCUSDT 日 K 重新计算。本页给出确切的公式、常数与窗口规则，任何数值都可手工复现。';
@@ -40,12 +40,17 @@ const structuredData = [
     '@type': 'TechArticle',
     headline: isEn
       ? 'AHR999 index methodology'
-      : 'AHR999 指标计算方法',
+      : 'AHR999 囤币指标计算方法',
     description,
     inLanguage: isEn ? 'en' : 'zh-Hans',
     url: canonical,
     mainEntityOfPage: canonical,
-    about: 'AHR999 Bitcoin hoarding index',
+    about: {
+      '@type': 'Dataset',
+      '@id': 'https://ahr999.aix4u.com/#dataset',
+      name: 'AHR999 Bitcoin Hoarding Index Dataset (daily, 2017–present)',
+      url: 'https://ahr999.aix4u.com/',
+    },
     license: 'https://creativecommons.org/licenses/by/4.0/',
     author: {
       '@type': 'Organization',

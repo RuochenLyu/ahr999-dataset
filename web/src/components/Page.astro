@@ -28,7 +28,20 @@ const firstDate = dataset[0]?.date ?? '—';
 const latestDate = latest?.date ?? '—';
 const recent30 = [...dataset].slice(-30).reverse();
 
-type Tier = { label: string; cls: string; hint: string };
+type TierKey = 'na' | 'bargain' | 'dca' | 'caution' | 'bubble';
+type ContextStats = {
+  value: string;
+  zone: string;
+  streak: number;
+  share: Record<'bargain' | 'dca' | 'caution' | 'bubble', number>;
+  min: string;
+  minDate: string;
+  max: string;
+  maxDate: string;
+  inBargain: boolean;
+  lastBargainDate: string;
+};
+type Tier = { key: TierKey; label: string; cls: string; hint: string };
 
 const t = isEn
   ? {
@@ -50,7 +63,7 @@ const t = isEn
         caution: { label: 'caution zone', hint: '1.20 – 3.00' },
         bubble: { label: 'bubble zone', hint: '> 3.00' },
       },
-      heroLeadHtml: `<strong>The open reference</strong> for the AHR999 BTC hoarding index. Self-computed daily from Binance BTCUSDT closes. Free to fetch, cite and fork.`,
+      heroLeadHtml: `Recomputed every day at <strong>00:37 UTC</strong> from Binance BTCUSDT closes by open-source TypeScript. No API key, CORS open, <strong>CC-BY-4.0</strong> — fetch it, cite it, fork it.`,
 
       mBtcClose: 'BTC close',
       mBtcCloseTag: 'USD · 1D',
@@ -68,11 +81,13 @@ const t = isEn
       legendMa: '200-day DCA cost · left',
       legendAhr: 'ahr999 · right',
       legendFloor: 'Bargain · 0.45',
-      legendDca: 'DCA · 1.20',
+      legendDca: 'Caution · 1.20',
+      rangeAria: 'Chart range',
+      ranges: { y1: '1Y', y2: '2Y', y5: '5Y', all: 'All' },
 
       dataEyebrow: 'Recent 30 days',
       dataTitle: 'Every UTC close, in order.',
-      dataCtaHistory: (n: string) => `Full ${n}-row history`,
+      dataCtaHistory: (n: string, kb: string) => `Download full JSON · ${n} rows · ${kb} kB`,
       colDate: 'Date',
       colClose: 'Close',
       colMa: 'MA200',
@@ -85,12 +100,28 @@ const t = isEn
       codeLabel: 'curl · jq · latest reading',
       codeCopy: 'click to copy',
       codeCopied: 'copied ✓',
+      codeCopyFallback: 'selected · press ⌘C / Ctrl+C',
       copyAria: 'Copy the curl command to clipboard',
 
       aboutEyebrow: 'What is AHR999?',
       aboutTitleHtml: `<em>AHR999</em> is a BTC dollar-cost-averaging heuristic.`,
       aboutBody1Html: `Originally proposed by the Chinese investor <strong>九神</strong>. The formula multiplies two ratios: today's close ÷ <strong>200-day moving average</strong>, and today's close ÷ <strong>log-log fitted fair value</strong>. The lower the value, the better the entry.`,
-      aboutBody2Html: `Conventional thresholds: below <strong>0.45</strong> is the bargain zone, <strong>0.45 – 1.20</strong> is the DCA zone, <strong>1.20 – 3.00</strong> is caution, above <strong>3.00</strong> is bubble. Every value here is recomputed daily from Binance BTCUSDT closes by open-source TypeScript code in this repository — fully traceable.`,
+      aboutBody2Html: `Conventional thresholds: below <strong>0.45</strong> is the bargain zone, <strong>0.45 – 1.20</strong> is the DCA zone, <strong>1.20 – 3.00</strong> is caution, above <strong>3.00</strong> is bubble. Every value here is recomputed daily from Binance BTCUSDT closes by open-source TypeScript code in this repository — fully traceable. Read the <a href="${nav.methodology.href}">methodology</a> for the exact formula and constants, or the <a href="${nav.faq.href}">FAQ</a> for how people use it.`,
+      contextEyebrow: 'Historical context',
+      contextTitle: 'Where today sits.',
+      contextProse: (c: ContextStats) =>
+        `Today's AHR999 of <strong>${c.value}</strong> sits in the <strong>${c.zone}</strong>, where it has closed for <strong>${c.streak}</strong> consecutive days. Over the past five years the index closed <strong>${c.share.bargain}%</strong> of days in the bargain zone, <strong>${c.share.dca}%</strong> in the DCA zone, <strong>${c.share.caution}%</strong> in caution and <strong>${c.share.bubble}%</strong> in bubble. The all-time low is <strong>${c.min}</strong> on ${c.minDate}; the all-time high is <strong>${c.max}</strong> on ${c.maxDate}. ${
+          c.inBargain
+            ? `The current bargain-zone stretch began on ${c.lastBargainDate}.`
+            : `The index last closed in the bargain zone on ${c.lastBargainDate}.`
+        }`,
+      sLow: 'All-time low',
+      sHigh: 'All-time high',
+      sStreak: 'Current streak',
+      sStreakTag: (zone: string) => zone,
+      sDays: (n: string) => `${n} days`,
+      sBargainShare: 'Bargain share',
+      sBargainShareTag: '5y closes',
       chartAriaLabel: 'AHR999 index chart',
       regimeLabels: {
         bargain: 'Bargain',
@@ -98,15 +129,17 @@ const t = isEn
         caution: 'Caution',
         bubble: 'Bubble',
       },
+      scaleAria: (v: string, tier: string) =>
+        `AHR999 regime scale: today's reading ${v} sits in the ${tier}.`,
 
       footerLicense: 'code MIT · data CC-BY-4.0',
       footerUpdated: (d: string, n: string) => `updated ${d} · ${n} rows`,
     }
   : {
-      title: 'AHR999 指标数据集 · 比特币定投估值信号（每日更新）',
+      title: 'AHR999 囤币指标数据集 · 比特币定投估值信号（每日更新）',
       metaDesc: (ahr: string, tier: string) =>
-        `开源、每日更新的 AHR999 指标数据集，用于比特币定投（DCA）估值。最新 AHR999 = ${ahr}（${tier}）。提供免费 JSON、CSV 与 API，基于 Binance BTCUSDT 日 K 自算。`,
-      heroH1Html: `开源 <em>AHR999</em> 指标 — 每日更新的比特币定投估值数据集`,
+        `开源、每日更新的 AHR999 囤币指标数据集，用于比特币定投（DCA）估值。最新 AHR999 = ${ahr}（${tier}）。提供免费 JSON、CSV 与 API，基于 Binance BTCUSDT 日 K 自算。`,
+      heroH1Html: `开源 <em>AHR999</em> 囤币指标 — 每日更新的比特币定投估值数据集`,
 
       liveLabel: (date: string) => `更新于 UTC ${date}`,
       liveTitle: '每日 UTC 00:37 自动更新',
@@ -121,7 +154,7 @@ const t = isEn
         caution: { label: '谨慎区', hint: '1.20 – 3.00' },
         bubble: { label: '泡沫区', hint: '> 3.00' },
       },
-      heroLeadHtml: `开源的 <strong>AHR999</strong> 囤币指标数据集。基于 Binance BTCUSDT 日 K 每日自动重算并更新，免费下载、引用、转载。`,
+      heroLeadHtml: `每日 <strong>UTC 00:37</strong> 由开源 TypeScript 基于 Binance BTCUSDT 收盘价全量重算。无需密钥，CORS 开放，<strong>CC-BY-4.0</strong> 授权，可自由下载、引用与转载。`,
 
       mBtcClose: 'BTC 收盘价',
       mBtcCloseTag: 'USD · 1D',
@@ -139,11 +172,13 @@ const t = isEn
       legendMa: '200 日定投成本 · 左轴',
       legendAhr: 'ahr999 · 右轴',
       legendFloor: '抄底 · 0.45',
-      legendDca: '定投 · 1.20',
+      legendDca: '谨慎 · 1.20',
+      rangeAria: '图表区间',
+      ranges: { y1: '1 年', y2: '2 年', y5: '5 年', all: '全部' },
 
       dataEyebrow: '最近 30 日',
       dataTitle: '逐日 UTC 收盘价。',
-      dataCtaHistory: (n: string) => `查看全部 ${n} 行`,
+      dataCtaHistory: (n: string, kb: string) => `下载完整 JSON · ${n} 行 · ${kb} kB`,
       colDate: '日期',
       colClose: '收盘价',
       colMa: 'MA200',
@@ -156,12 +191,28 @@ const t = isEn
       codeLabel: 'curl · jq · 最新值',
       codeCopy: '点击复制',
       codeCopied: '已复制',
+      codeCopyFallback: '已选中 · 请按 ⌘C / Ctrl+C',
       copyAria: '复制 curl 命令到剪贴板',
 
       aboutEyebrow: '关于 AHR999',
       aboutTitleHtml: `<em>AHR999</em> 是 BTC 的定投参考指标。`,
       aboutBody1Html: `由投资者<strong>九神</strong>最先提出。公式是两个比值相乘：当日收盘 ÷ <strong>200 日均价</strong>，再乘以当日收盘 ÷ <strong>log-log 拟合公允价</strong>。值越低，定投越划算。`,
-      aboutBody2Html: `经验阈值：<strong>0.45</strong> 以下为抄底区，<strong>0.45 – 1.20</strong> 为定投区，<strong>1.20 – 3.00</strong> 为谨慎区，<strong>3.00</strong> 以上为泡沫区。本站数值由本仓库中的开源 TypeScript 代码每日从 Binance BTCUSDT 日 K 全量重算，逐行可追溯。`,
+      aboutBody2Html: `经验阈值：<strong>0.45</strong> 以下为抄底区，<strong>0.45 – 1.20</strong> 为定投区，<strong>1.20 – 3.00</strong> 为谨慎区，<strong>3.00</strong> 以上为泡沫区。本站数值由本仓库中的开源 TypeScript 代码每日从 Binance BTCUSDT 日 K 全量重算，逐行可追溯。完整公式与常数见<a href="${nav.methodology.href}">方法论</a>，常见用法见<a href="${nav.faq.href}">常见问题</a>。`,
+      contextEyebrow: '历史对照',
+      contextTitle: '今天处在什么位置。',
+      contextProse: (c: ContextStats) =>
+        `今日 AHR999 为 <strong>${c.value}</strong>，处于<strong>${c.zone}</strong>，已连续 <strong>${c.streak}</strong> 天收在该区间。过去五年里，指数有 <strong>${c.share.bargain}%</strong> 的交易日收在抄底区，<strong>${c.share.dca}%</strong> 在定投区，<strong>${c.share.caution}%</strong> 在谨慎区，<strong>${c.share.bubble}%</strong> 在泡沫区。历史最低 <strong>${c.min}</strong>（${c.minDate}），历史最高 <strong>${c.max}</strong>（${c.maxDate}）。${
+          c.inBargain
+            ? `本轮抄底区从 ${c.lastBargainDate} 开始。`
+            : `上一次收在抄底区是 ${c.lastBargainDate}。`
+        }`,
+      sLow: '历史最低',
+      sHigh: '历史最高',
+      sStreak: '当前连续',
+      sStreakTag: (zone: string) => zone,
+      sDays: (n: string) => `${n} 天`,
+      sBargainShare: '抄底区占比',
+      sBargainShareTag: '近 5 年',
       chartAriaLabel: 'AHR999 指数图表',
       regimeLabels: {
         bargain: '抄底区',
@@ -169,6 +220,8 @@ const t = isEn
         caution: '谨慎区',
         bubble: '泡沫区',
       },
+      scaleAria: (v: string, tier: string) =>
+        `AHR999 档位刻度：今日读数 ${v}，处于${tier}。`,
 
       footerLicense: '代码 MIT · 数据 CC-BY-4.0',
       footerUpdated: (d: string, n: string) => `${d} 更新 · 共 ${n} 行`,
@@ -176,11 +229,13 @@ const t = isEn
 
 function tierFor(value: number | null | undefined): Tier {
   if (value === null || value === undefined)
-    return { ...t.tiers.na, cls: 'tier-na' };
-  if (value < 0.45) return { ...t.tiers.bargain, cls: 'tier-bargain' };
-  if (value < 1.2) return { ...t.tiers.dca, cls: 'tier-dca' };
-  if (value < 3) return { ...t.tiers.caution, cls: 'tier-caution' };
-  return { ...t.tiers.bubble, cls: 'tier-bubble' };
+    return { ...t.tiers.na, key: 'na', cls: 'tier-na' };
+  if (value < 0.45)
+    return { ...t.tiers.bargain, key: 'bargain', cls: 'tier-bargain' };
+  if (value < 1.2) return { ...t.tiers.dca, key: 'dca', cls: 'tier-dca' };
+  if (value < 3)
+    return { ...t.tiers.caution, key: 'caution', cls: 'tier-caution' };
+  return { ...t.tiers.bubble, key: 'bubble', cls: 'tier-bubble' };
 }
 
 function fmtUsd(v: number | null | undefined): string {
@@ -208,6 +263,51 @@ function fmtDelta(v: number | null | undefined): string {
 }
 
 const tier = tierFor(latest?.ahr999 ?? null);
+
+// Historical context — unique, data-driven copy that changes with the series.
+const scored = dataset.filter(
+  (r): r is Row & { ahr999: number } => typeof r.ahr999 === 'number',
+);
+const allTimeMin = scored.reduce((a, b) => (b.ahr999 < a.ahr999 ? b : a));
+const allTimeMax = scored.reduce((a, b) => (b.ahr999 > a.ahr999 ? b : a));
+const fiveYears = scored.slice(-365 * 5);
+const zoneCounts = { bargain: 0, dca: 0, caution: 0, bubble: 0 };
+for (const r of fiveYears) {
+  const k = tierFor(r.ahr999).key;
+  if (k !== 'na') zoneCounts[k] += 1;
+}
+const pct = (n: number): number =>
+  fiveYears.length ? Math.round((n / fiveYears.length) * 100) : 0;
+let streak = 0;
+for (let i = scored.length - 1; i >= 0; i--) {
+  if (tierFor(scored[i]!.ahr999).key !== tier.key) break;
+  streak += 1;
+}
+const streakStart = scored[scored.length - streak]?.date ?? latestDate;
+const lastBargainBeforeStreak = [...scored]
+  .slice(0, scored.length - streak)
+  .reverse()
+  .find((r) => r.ahr999 < 0.45);
+const contextStats: ContextStats = {
+  value: fmtAhr(latest?.ahr999 ?? null),
+  zone: tier.label,
+  streak,
+  share: {
+    bargain: pct(zoneCounts.bargain),
+    dca: pct(zoneCounts.dca),
+    caution: pct(zoneCounts.caution),
+    bubble: pct(zoneCounts.bubble),
+  },
+  min: fmtAhr(allTimeMin.ahr999),
+  minDate: allTimeMin.date,
+  max: fmtAhr(allTimeMax.ahr999),
+  maxDate: allTimeMax.date,
+  inBargain: tier.key === 'bargain',
+  lastBargainDate:
+    tier.key === 'bargain'
+      ? streakStart
+      : (lastBargainBeforeStreak?.date ?? '—'),
+};
 const siteOrigin = 'https://ahr999.aix4u.com';
 const datasetJsonUrl = '/datasets/ahr999.json';
 const datasetCsvUrl = '/datasets/ahr999.csv';
@@ -219,16 +319,15 @@ const zhUrl = new URL('/zh/', siteOrigin).toString();
 const pageUrl = isEn ? enUrl : zhUrl;
 const ogImageUrl = new URL('/og-image.png', siteOrigin).toString();
 const openApiUrl = new URL('/openapi.json', siteOrigin).toString();
-const apiCatalogUrl = new URL('/.well-known/api-catalog', siteOrigin)
-  .toString();
+const apiCatalogUrl = new URL('/api-catalog', siteOrigin).toString();
 const llmsTxtUrl = new URL('/llms.txt', siteOrigin).toString();
 const sitemapUrl = new URL('/sitemap.xml', siteOrigin).toString();
 const latestAhrStr = fmtAhr(latest?.ahr999 ?? null);
 const socialTitle = t.title;
 const metaDescription = t.metaDesc(latestAhrStr, tier.label);
 const ogImageAlt = isEn
-  ? 'AHR999 open dataset brand card: daily open BTC accumulation index.'
-  : 'AHR999 开放数据集品牌卡：日度 BTC 开盘累积指数。';
+  ? 'AHR999 open dataset brand card: open, daily-updated Bitcoin DCA valuation index.'
+  : 'AHR999 开放数据集品牌卡：开源、每日更新的比特币定投估值指标。';
 const currentYear = new Date().getUTCFullYear();
 
 const sevenAgo = dataset[dataset.length - 8];
@@ -249,57 +348,148 @@ const csvSizeKb = Math.round(
   fs.statSync('public/datasets/ahr999.csv').size / 1024,
 );
 
+// Regime scale: four equal-width segments (0–0.45, 0.45–1.20, 1.20–3.00,
+// 3.00–6.00); the marker is placed piecewise-linearly inside its segment.
+const regimeBounds = [0, 0.45, 1.2, 3, 6];
+function scalePosition(v: number | null | undefined): number | null {
+  if (v === null || v === undefined || !Number.isFinite(v)) return null;
+  const x = Math.min(Math.max(v, 0), regimeBounds[regimeBounds.length - 1]!);
+  for (let i = 0; i < regimeBounds.length - 1; i++) {
+    const lo = regimeBounds[i]!;
+    const hi = regimeBounds[i + 1]!;
+    if (x <= hi) return Math.round((i + (x - lo) / (hi - lo)) * 25 * 10) / 10;
+  }
+  return 100;
+}
+const markerPos = scalePosition(latest?.ahr999 ?? null);
+const regimeSegments = [
+  { cls: 'tier-bargain', label: t.regimeLabels.bargain, range: '< 0.45' },
+  { cls: 'tier-dca', label: t.regimeLabels.dca, range: '0.45 – 1.20' },
+  { cls: 'tier-caution', label: t.regimeLabels.caution, range: '1.20 – 3.00' },
+  { cls: 'tier-bubble', label: t.regimeLabels.bubble, range: '> 3.00' },
+];
+
 const altLangHref = isEn ? '/zh/' : '/';
 const altLangLabel = isEn ? '中' : 'EN';
 
 const copyCommand = `curl -s ${datasetJsonAbsoluteUrl} | jq '.[-1]'`;
+const datasetId = `${siteHomeUrl}#dataset`;
+const websiteId = `${siteHomeUrl}#website`;
+const githubUrl = 'https://github.com/RuochenLyu/ahr999-dataset';
+const huggingFaceUrl = 'https://huggingface.co/datasets/kshift/ahr999-dataset';
+const kaggleUrl =
+  'https://www.kaggle.com/datasets/kshift/ahr999-btc-hoarding-index-dataset';
+const publisher = {
+  '@type': 'Organization',
+  name: 'ahr999-dataset contributors',
+  url: githubUrl,
+  sameAs: [githubUrl],
+};
+
 const datasetStructuredData = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'Dataset',
-  name: 'AHR999 Dataset',
+  '@id': datasetId,
+  name: 'AHR999 Bitcoin Hoarding Index Dataset (daily, 2017–present)',
   alternateName: [
+    'AHR999 dataset',
     'AHR999 hoarding index dataset',
     'BTC hoarding index dataset',
+    'AHR999 囤币指标数据集',
+    'ahr999-dataset',
   ],
   description:
-    'Open, daily-updated AHR999 BTC hoarding index dataset, self-computed from Binance BTCUSDT daily closes and published as JSON and CSV.',
+    `Daily AHR999 (Bitcoin hoarding index / 囤币指标) values from ${firstDate} to ${latestDate}, ${rowCount.toLocaleString('en-US')} rows, one per UTC calendar day. ` +
+    'Each row carries the Binance BTCUSDT daily close, its 200-day simple moving average, the AHR999 value ((close / MA200) × (close / log-log fitted fair value)), ' +
+    'the empirical 5-year quantile of that value, and the window kind used for the quantile. The series is recomputed from scratch every day at 00:37 UTC by open-source TypeScript ' +
+    'and published as JSON and CSV with open CORS. Intended for dollar-cost-averaging research, backtesting and education; not financial advice.',
   url: siteHomeUrl,
+  sameAs: [huggingFaceUrl, kaggleUrl],
+  identifier: [siteHomeUrl, githubUrl],
   inLanguage: ['en', 'zh-Hans'],
   isAccessibleForFree: true,
   license: 'https://creativecommons.org/licenses/by/4.0/',
-  creator: {
-    '@type': 'Organization',
-    name: 'ahr999-dataset contributors',
-    url: 'https://github.com/RuochenLyu/ahr999-dataset',
-  },
+  creator: publisher,
+  publisher,
   keywords: [
     'AHR999',
+    'AHR999 index',
+    '囤币指标',
     'Bitcoin',
     'BTC',
     'BTCUSDT',
+    'dollar-cost averaging',
+    'DCA',
+    '定投',
+    'cryptocurrency valuation',
+    'time series',
     'dataset',
     'CSV',
     'JSON',
-    'dollar-cost averaging',
   ],
+  datePublished: '2026-04-20',
   dateModified: latestDate,
-  temporalCoverage: `${firstDate}/${latestDate}`,
   version: latestDate,
+  temporalCoverage: `${firstDate}/..`,
+  isBasedOn:
+    'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d',
   measurementTechnique:
-    'AHR999 = (close / ma200) * (close / fitted), computed from Binance BTCUSDT daily closes.',
+    'AHR999 = (close / ma200) × (close / fitted), fitted = 10^(5.84·log10(coin_age_days) − 17.01), computed from Binance BTCUSDT daily closes; quantile5y is the empirical rank within a rolling 5-year window.',
+  variableMeasured: [
+    {
+      '@type': 'PropertyValue',
+      name: 'date',
+      description: 'UTC calendar day of the close, YYYY-MM-DD',
+    },
+    {
+      '@type': 'PropertyValue',
+      name: 'close',
+      description: 'BTCUSDT daily close from Binance',
+      unitText: 'USD',
+    },
+    {
+      '@type': 'PropertyValue',
+      name: 'ma200',
+      description: '200-day simple moving average of close',
+      unitText: 'USD',
+    },
+    {
+      '@type': 'PropertyValue',
+      name: 'ahr999',
+      description: 'AHR999 hoarding index value (dimensionless)',
+    },
+    {
+      '@type': 'PropertyValue',
+      name: 'quantile5y',
+      description:
+        'Empirical quantile of ahr999 within the trailing 5-year window, 0–1',
+    },
+    {
+      '@type': 'PropertyValue',
+      name: 'windowKind',
+      description:
+        'Quantile window used: insufficient_samples, expanding or rolling_5y',
+    },
+  ],
   distribution: [
     {
       '@type': 'DataDownload',
       name: 'AHR999 JSON dataset',
       encodingFormat: 'application/json',
       contentUrl: datasetJsonAbsoluteUrl,
+      contentSize: `${jsonSizeKb} kB`,
     },
     {
       '@type': 'DataDownload',
       name: 'AHR999 CSV dataset',
       encodingFormat: 'text/csv',
       contentUrl: datasetCsvAbsoluteUrl,
+      contentSize: `${csvSizeKb} kB`,
     },
+  ],
+  includedInDataCatalog: [
+    { '@type': 'DataCatalog', name: 'Hugging Face Datasets', url: 'https://huggingface.co/datasets' },
+    { '@type': 'DataCatalog', name: 'Kaggle Datasets', url: 'https://www.kaggle.com/datasets' },
   ],
   subjectOf: [
     {
@@ -323,18 +513,30 @@ const datasetStructuredData = JSON.stringify({
 const websiteStructuredData = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'WebSite',
+  '@id': websiteId,
   name: 'AHR999 Dataset',
-  alternateName: 'ahr999-dataset',
+  alternateName: ['ahr999-dataset', 'AHR999 囤币指标数据集'],
   url: siteHomeUrl,
   inLanguage: ['en', 'zh-Hans'],
   description:
     'Open, daily-updated AHR999 Bitcoin hoarding index dataset for dollar-cost-averaging research, published as JSON, CSV and a read-only API.',
   license: 'https://creativecommons.org/licenses/by/4.0/',
-  publisher: {
-    '@type': 'Organization',
-    name: 'ahr999-dataset contributors',
-    url: 'https://github.com/RuochenLyu/ahr999-dataset',
-  },
+  publisher,
+});
+
+const webPageStructuredData = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  '@id': pageUrl,
+  url: pageUrl,
+  name: t.title,
+  description: metaDescription,
+  inLanguage: isEn ? 'en' : 'zh-Hans',
+  dateModified: latestDate,
+  isPartOf: { '@id': websiteId },
+  about: { '@id': datasetId },
+  mainEntity: { '@id': datasetId },
+  primaryImageOfPage: ogImageUrl,
 });
 ---
 
@@ -348,7 +550,7 @@ const websiteStructuredData = JSON.stringify({
     />
     <title>{socialTitle}</title>
     <meta name="description" content={metaDescription} />
-    <meta name="theme-color" content="#09090b" />
+    <meta name="theme-color" content="#0b0a08" />
     <meta name="color-scheme" content="dark" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="canonical" href={pageUrl} />
@@ -367,6 +569,7 @@ const websiteStructuredData = JSON.stringify({
     <meta name="twitter:description" content={metaDescription} />
     <meta name="twitter:image" content={ogImageUrl} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="sitemap" type="application/xml" href={sitemapUrl} />
     <link
       rel="service-desc"
@@ -395,10 +598,18 @@ const websiteStructuredData = JSON.stringify({
     <link rel="alternate" hreflang="en" href={enUrl} />
     <link rel="alternate" hreflang="zh-Hans" href={zhUrl} />
     <link rel="alternate" hreflang="x-default" href={enUrl} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/instrument-serif-400-italic-latin.woff2"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/instrument-sans-400-600-normal-latin.woff2"
       crossorigin="anonymous"
     />
     <link
@@ -409,16 +620,17 @@ const websiteStructuredData = JSON.stringify({
     />
     <script type="application/ld+json" set:html={datasetStructuredData}></script>
     <script type="application/ld+json" set:html={websiteStructuredData}></script>
+    <script type="application/ld+json" set:html={webPageStructuredData}></script>
   </head>
   <body>
     <div class="page-bg" aria-hidden="true">
       <div class="bg-grid"></div>
-      <div class="bg-scan"></div>
       <div class="bg-glow"></div>
       <div class="bg-glow-alt"></div>
     </div>
 
     <!-- HEADER -->
+    <a class="skip-link" href="#main">{isEn ? 'Skip to content' : '跳到正文'}</a>
     <header class="site-header">
       <a class="brand" href="/" aria-label="ahr999 dataset — home">
         <span class="brand-mark">◐</span>
@@ -431,6 +643,15 @@ const websiteStructuredData = JSON.stringify({
         <span>{t.liveLabel(latestDate)}</span>
       </div>
       <nav class="site-nav" aria-label="primary">
+        <a href={nav.methodology.href} class="nav-link nav-hide-md">
+          {nav.methodology.navLabel}
+        </a>
+        <a href={nav.api.href} class="nav-link nav-hide-md">
+          {nav.api.navLabel}
+        </a>
+        <a href={nav.faq.href} class="nav-link nav-hide-md">
+          {nav.faq.navLabel}
+        </a>
         <a
           href={altLangHref}
           class="lang-toggle"
@@ -453,7 +674,7 @@ const websiteStructuredData = JSON.stringify({
       </nav>
     </header>
 
-    <main>
+    <main id="main">
       <!-- HERO -->
       <section class="hero">
         <div class="hero-top">
@@ -527,9 +748,7 @@ const websiteStructuredData = JSON.stringify({
           </a>
           <a href={datasetJsonUrl} class="btn-ghost" download>
             <span>{t.ctaJsonLabel}</span>
-            <span class="mono" style="color: var(--fg-dim); font-size: 10.5px;"
-              >{jsonSizeKb} kB</span
-            >
+            <span class="mono">{jsonSizeKb} kB</span>
           </a>
           <span class="mini-note">
             {t.ctaNote(rowCount.toLocaleString())}
@@ -578,10 +797,62 @@ const websiteStructuredData = JSON.stringify({
               <span class="bar" aria-hidden="true"></span>
               <span>{t.legendFloor}</span>
             </span>
-            <span class="swatch dca dashed">
+            <span class="swatch caution dashed">
               <span class="bar" aria-hidden="true"></span>
               <span>{t.legendDca}</span>
             </span>
+            <span class="chart-ranges" role="group" aria-label={t.rangeAria}>
+              <button type="button" data-days="365">{t.ranges.y1}</button>
+              <button type="button" data-days="730" class="active" aria-pressed="true">{t.ranges.y2}</button>
+              <button type="button" data-days="1826">{t.ranges.y5}</button>
+              <button type="button" data-days="0">{t.ranges.all}</button>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTORICAL CONTEXT -->
+      <section id="context" class="section">
+        <header class="section-head">
+          <div>
+            <div class="eyebrow">
+              <span class="label-dot"></span>
+              <span>{t.contextEyebrow}</span>
+            </div>
+            <h2 class="section-title">{t.contextTitle}</h2>
+          </div>
+        </header>
+        <p class="context-prose" set:html={t.contextProse(contextStats)}></p>
+        <div class="metric-ribbon context-stats">
+          <div class="metric-card">
+            <div class="metric-label">
+              <span>{t.sLow}</span>
+              <span class="tag">{contextStats.minDate}</span>
+            </div>
+            <div class="metric-value">{contextStats.min}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">
+              <span>{t.sHigh}</span>
+              <span class="tag">{contextStats.maxDate}</span>
+            </div>
+            <div class="metric-value">{contextStats.max}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">
+              <span>{t.sStreak}</span>
+              <span class="tag">{t.sStreakTag(contextStats.zone)}</span>
+            </div>
+            <div class="metric-value">
+              {t.sDays(contextStats.streak.toLocaleString())}
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">
+              <span>{t.sBargainShare}</span>
+              <span class="tag">{t.sBargainShareTag}</span>
+            </div>
+            <div class="metric-value">{contextStats.share.bargain}%</div>
           </div>
         </div>
       </section>
@@ -598,7 +869,7 @@ const websiteStructuredData = JSON.stringify({
           </div>
           <div>
             <a href={datasetJsonUrl} class="btn-ghost" download>
-              <span>{t.dataCtaHistory(rowCount.toLocaleString())}</span>
+              <span>{t.dataCtaHistory(rowCount.toLocaleString(), String(jsonSizeKb))}</span>
               <span aria-hidden="true">→</span>
             </a>
           </div>
@@ -628,9 +899,16 @@ const websiteStructuredData = JSON.stringify({
                       <td class="num strong">{fmtAhr(row.ahr999)}</td>
                       <td class="num hide-sm">{fmtPct(row.quantile5y)}</td>
                       <td>
-                        <span class={`regime ${rowTier.cls}`}>
+                        <span
+                          class={`regime ${rowTier.cls}`}
+                          title={rowTier.label}
+                        >
                           <span class="regime-dot" aria-hidden="true"></span>
-                          {rowTier.label}
+                          <span class="regime-text">
+                            {rowTier.key === 'na'
+                              ? rowTier.label
+                              : t.regimeLabels[rowTier.key]}
+                          </span>
                         </span>
                       </td>
                     </tr>
@@ -650,12 +928,7 @@ const websiteStructuredData = JSON.stringify({
               <span class="label-dot"></span>
               <span>{t.codeEyebrow}</span>
             </div>
-            <h2
-              class="section-title"
-              style="font-size: clamp(1.5rem, 2.8vw, 2.1rem);"
-            >
-              {t.codeTitle}
-            </h2>
+            <h2 class="section-title section-title-sm">{t.codeTitle}</h2>
           </div>
         </div>
 
@@ -667,16 +940,12 @@ const websiteStructuredData = JSON.stringify({
           aria-label={t.copyAria}
         >
           <div class="code-label">
-            <span class="lhs">
-              <span class="traffic" aria-hidden="true">
-                <span></span><span></span><span></span>
-              </span>
-              <span>{t.codeLabel}</span>
-            </span>
+            <span class="lhs">{t.codeLabel}</span>
             <span
               class="copy-hint"
               data-copy={t.codeCopy}
-              data-copied={t.codeCopied}>{t.codeCopy}</span
+              data-copied={t.codeCopied}
+              data-fallback={t.codeCopyFallback}>{t.codeCopy}</span
             >
           </div>
           <pre
@@ -701,34 +970,37 @@ const websiteStructuredData = JSON.stringify({
           <p set:html={t.aboutBody2Html}></p>
         </div>
 
-        <div class="regime-grid">
-          <div class="regime-card tier-bargain">
-            <span class="label-row">
-              <span class="dot" aria-hidden="true"></span>
-              <span class="label">{t.regimeLabels.bargain}</span>
-            </span>
-            <span class="range">&lt; 0.45</span>
+        <div class="regime-scale" aria-label={t.scaleAria(latestAhrStr, tier.label)}>
+          <div class="regime-track" aria-hidden="true">
+            <span class="seg tier-bargain"></span>
+            <span class="seg tier-dca"></span>
+            <span class="seg tier-caution"></span>
+            <span class="seg tier-bubble"></span>
+            {
+              markerPos !== null && (
+                <span class="regime-marker" style={`left: ${markerPos}%`}>
+                  <span class="regime-marker-value">{latestAhrStr}</span>
+                </span>
+              )
+            }
           </div>
-          <div class="regime-card tier-dca">
-            <span class="label-row">
-              <span class="dot" aria-hidden="true"></span>
-              <span class="label">{t.regimeLabels.dca}</span>
-            </span>
-            <span class="range">0.45 – 1.20</span>
+          <div class="regime-ticks" aria-hidden="true">
+            <span style="left: 25%">0.45</span>
+            <span style="left: 50%">1.20</span>
+            <span style="left: 75%">3.00</span>
           </div>
-          <div class="regime-card tier-caution">
-            <span class="label-row">
-              <span class="dot" aria-hidden="true"></span>
-              <span class="label">{t.regimeLabels.caution}</span>
-            </span>
-            <span class="range">1.20 – 3.00</span>
-          </div>
-          <div class="regime-card tier-bubble">
-            <span class="label-row">
-              <span class="dot" aria-hidden="true"></span>
-              <span class="label">{t.regimeLabels.bubble}</span>
-            </span>
-            <span class="range">&gt; 3.00</span>
+          <div class="regime-labels">
+            {
+              regimeSegments.map((seg) => (
+                <div class={seg.cls}>
+                  <span class="label-row">
+                    <span class="dot" aria-hidden="true" />
+                    <span class="label">{seg.label}</span>
+                  </span>
+                  <span class="range">{seg.range}</span>
+                </div>
+              ))
+            }
           </div>
         </div>
       </section>
@@ -776,6 +1048,7 @@ const websiteStructuredData = JSON.stringify({
         DataZoomComponent,
         type DataZoomComponentOption,
         MarkLineComponent,
+        MarkAreaComponent,
       } from 'echarts/components';
       import { CanvasRenderer } from 'echarts/renderers';
 
@@ -786,6 +1059,7 @@ const websiteStructuredData = JSON.stringify({
         AxisPointerComponent,
         DataZoomComponent,
         MarkLineComponent,
+        MarkAreaComponent,
         CanvasRenderer,
       ]);
 
@@ -808,13 +1082,16 @@ const websiteStructuredData = JSON.stringify({
       const COLOR_PRICE = '#f59e0b';
       const COLOR_MA200 = '#94a3b8';
       const COLOR_AHR = '#60a5fa';
-      const COLOR_FLOOR = '#f87171';
-      const COLOR_DCA = '#34d399';
-      const COLOR_AXIS = '#27272a';
-      const COLOR_GRID = 'rgba(63, 63, 70, 0.35)';
-      const COLOR_FG = '#fafafa';
-      const COLOR_FG_MUTED = '#a1a1aa';
-      const COLOR_FG_DIM = '#7e7e88';
+      // Zone semantics: lower AHR999 = better entry, so the bargain boundary
+      // is green and the caution boundary is amber (matches the tier colours
+      // in global.css: bargain green, DCA blue, caution amber, bubble red).
+      const COLOR_FLOOR = '#34d399';
+      const COLOR_DCA = '#f59e0b';
+      const COLOR_AXIS = '#2a2620';
+      const COLOR_GRID = 'rgba(64, 58, 49, 0.35)';
+      const COLOR_FG = '#f7f4ee';
+      const COLOR_FG_MUTED = '#a8a29a';
+      const COLOR_FG_DIM = '#807a70';
 
       const el = document.getElementById('chart') as HTMLDivElement | null;
       if (!el) {
@@ -830,7 +1107,7 @@ const websiteStructuredData = JSON.stringify({
               ma: '200 日均价',
               ahr: 'ahr999',
               floor: '抄底',
-              dca: '定投',
+              dca: '谨慎',
             }
           : {
               loading: 'loading',
@@ -838,7 +1115,7 @@ const websiteStructuredData = JSON.stringify({
               ma: '200d DCA cost',
               ahr: 'ahr999',
               floor: 'Bargain',
-              dca: 'DCA',
+              dca: 'Caution',
             };
 
       const chart = echarts.init(el, null, { renderer: 'canvas' });
@@ -942,6 +1219,11 @@ const websiteStructuredData = JSON.stringify({
       // Safari first paint before the stylesheet applies.
       // Match the CSS breakpoint in global.css so layout and chart config stay
       // in sync at the exact edge.
+      const DEFAULT_RANGE_DAYS = 365 * 2;
+      function startPercentForDays(days: number, total: number): number {
+        return days > 0 && total > days ? 100 - (days / total) * 100 : 0;
+      }
+
       const narrowQuery = '(max-width: 560px)';
       const isNarrowNow = (): boolean =>
         window.matchMedia(narrowQuery).matches;
@@ -952,11 +1234,10 @@ const websiteStructuredData = JSON.stringify({
         const ma200Series = rows.map((r) => r.ma200);
         const ahrSeries = rows.map((r) => r.ahr999);
 
-        const TWO_YEARS_DAYS = 365 * 2;
-        const defaultStartPercent =
-          dates.length > TWO_YEARS_DAYS
-            ? 100 - (TWO_YEARS_DAYS / dates.length) * 100
-            : 0;
+        const defaultStartPercent = startPercentForDays(
+          DEFAULT_RANGE_DAYS,
+          dates.length,
+        );
 
         return {
           backgroundColor: 'transparent',
@@ -977,13 +1258,13 @@ const websiteStructuredData = JSON.stringify({
               },
               crossStyle: { color: COLOR_FG_DIM },
               label: {
-                backgroundColor: '#0c0c0f',
+                backgroundColor: '#0f0e0b',
                 borderColor: COLOR_AXIS,
                 borderWidth: 1,
                 color: COLOR_FG_MUTED,
                 fontFamily:
                   'JetBrains Mono, ui-monospace, SF Mono, Menlo, monospace',
-                fontSize: 10,
+                fontSize: 11,
               },
             },
             backgroundColor: 'transparent',
@@ -1013,10 +1294,11 @@ const websiteStructuredData = JSON.stringify({
             axisLabel: {
               color: COLOR_FG_DIM,
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: 10,
+              fontSize: 11,
               formatter: (value: string) =>
                 value.length >= 7 ? value.slice(0, 7) : value,
               hideOverlap: true,
+              showMaxLabel: narrow ? false : undefined,
             },
             splitLine: { show: false },
           },
@@ -1032,7 +1314,7 @@ const websiteStructuredData = JSON.stringify({
                 verticalAlign: narrow ? 'bottom' : 'middle',
                 color: COLOR_FG_DIM,
                 fontFamily: 'JetBrains Mono, monospace',
-                fontSize: 10,
+                fontSize: 11,
                 formatter: (value: number): string => {
                   if (value >= 1_000_000)
                     return `$${(value / 1_000_000).toFixed(0)}M`;
@@ -1056,7 +1338,7 @@ const websiteStructuredData = JSON.stringify({
                 verticalAlign: narrow ? 'bottom' : 'middle',
                 color: COLOR_FG_DIM,
                 fontFamily: 'JetBrains Mono, monospace',
-                fontSize: 10,
+                fontSize: 11,
                 formatter: (value: number): string => value.toFixed(1),
               },
               splitLine: { show: false },
@@ -1089,7 +1371,7 @@ const websiteStructuredData = JSON.stringify({
               textStyle: {
                 color: COLOR_FG_DIM,
                 fontFamily: 'JetBrains Mono, monospace',
-                fontSize: 10,
+                fontSize: 11,
               },
               brushSelect: false,
             },
@@ -1127,13 +1409,27 @@ const websiteStructuredData = JSON.stringify({
               lineStyle: { color: COLOR_AHR, width: 1.4 },
               itemStyle: { color: COLOR_AHR },
               z: 3,
+              markArea: {
+                silent: true,
+                data: [
+                  [
+                    { yAxis: 0, itemStyle: { color: COLOR_FLOOR, opacity: 0.05 } },
+                    { yAxis: 0.45 },
+                  ],
+                  [
+                    { yAxis: 1.2, itemStyle: { color: COLOR_DCA, opacity: 0.05 } },
+                    { yAxis: 'max' },
+                  ],
+                ],
+              },
               markLine: {
                 silent: true,
                 symbol: 'none',
                 label: {
+                  show: !narrow,
                   position: 'insideEndTop',
                   color: COLOR_FG_DIM,
-                  fontSize: 10,
+                  fontSize: 11,
                   fontFamily: 'JetBrains Mono, monospace',
                   padding: [2, 4, 0, 4],
                 },
@@ -1201,6 +1497,50 @@ const websiteStructuredData = JSON.stringify({
       });
       ro.observe(el);
 
+      // range presets — drive the slider dataZoom and mirror its state back
+      const rangeButtons = Array.from(
+        document.querySelectorAll<HTMLButtonElement>('.chart-ranges button'),
+      );
+      function markActiveRange(days: number | null): void {
+        for (const btn of rangeButtons) {
+          const active = days !== null && Number(btn.dataset.days) === days;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
+      }
+      for (const btn of rangeButtons) {
+        btn.addEventListener('click', () => {
+          if (!cachedRows) return;
+          const days = Number(btn.dataset.days);
+          chart.dispatchAction({
+            type: 'dataZoom',
+            start: startPercentForDays(days, cachedRows.length),
+            end: 100,
+          });
+          markActiveRange(days);
+        });
+      }
+      chart.on('datazoom', () => {
+        if (!cachedRows) return;
+        const option = chart.getOption() as {
+          dataZoom?: Array<{ start?: number; end?: number }>;
+        };
+        const dz = option.dataZoom?.[0];
+        if (!dz || typeof dz.start !== 'number' || typeof dz.end !== 'number') {
+          return;
+        }
+        const total = cachedRows.length;
+        const match = rangeButtons.find((btn) => {
+          const days = Number(btn.dataset.days);
+          const start = startPercentForDays(days, total);
+          return (
+            Math.abs((dz.start ?? 0) - start) < 0.05 &&
+            Math.abs((dz.end ?? 100) - 100) < 0.05
+          );
+        });
+        markActiveRange(match ? Number(match.dataset.days) : null);
+      });
+
       loadAndRender().catch((error: unknown) => {
         chart.hideLoading();
         console.error(error);
@@ -1214,23 +1554,38 @@ const websiteStructuredData = JSON.stringify({
       const copyCard = document.getElementById('copy-card');
       const copySrc = document.getElementById('copy-src');
       if (copyCard && copySrc) {
+        const hint = copyCard.querySelector('.copy-hint') as HTMLElement | null;
+        const hintOriginal = hint?.dataset.copy ?? 'click to copy';
+        let hintTimer: ReturnType<typeof setTimeout> | undefined;
+        const flashHint = (text: string, ms: number): void => {
+          if (!hint) return;
+          hint.textContent = text;
+          clearTimeout(hintTimer);
+          hintTimer = setTimeout(() => {
+            copyCard.classList.remove('copied');
+            hint.textContent = hintOriginal;
+          }, ms);
+        };
+        const selectCommand = (): void => {
+          const code = copySrc.querySelector('code');
+          const selection = window.getSelection();
+          if (!code || !selection) return;
+          const range = document.createRange();
+          range.selectNodeContents(code);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        };
         const doCopy = async (): Promise<void> => {
+          const text = (copySrc as HTMLElement).dataset.copy ?? '';
           try {
-            const text = (copySrc as HTMLElement).dataset.copy ?? '';
             await navigator.clipboard.writeText(text);
             copyCard.classList.add('copied');
-            const hint = copyCard.querySelector(
-              '.copy-hint',
-            ) as HTMLElement | null;
-            const copied = hint?.dataset.copied ?? 'copied';
-            const original = hint?.dataset.copy ?? 'click to copy';
-            if (hint) hint.textContent = copied;
-            setTimeout(() => {
-              copyCard.classList.remove('copied');
-              if (hint) hint.textContent = original;
-            }, 1600);
+            flashHint(hint?.dataset.copied ?? 'copied', 1600);
           } catch {
-            /* clipboard blocked; no-op */
+            // clipboard blocked (permissions / insecure context): select the
+            // command so a manual copy is one keystroke away
+            selectCommand();
+            flashHint(hint?.dataset.fallback ?? hintOriginal, 2400);
           }
         };
         copyCard.addEventListener('click', () => void doCopy());

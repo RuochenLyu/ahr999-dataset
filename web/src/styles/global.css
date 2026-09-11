@@ -1,21 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import './fonts.css';
 
 :root {
   color-scheme: dark;
 
-  --bg: #09090b;
-  --bg-elevated: #0c0c0f;
-  --bg-hover: #111114;
-  --bg-panel: #0a0a0d;
+  /* Neutrals are tinted toward the amber brand hue (never pure black/gray). */
+  --bg: #0b0a08;
+  --bg-elevated: #0f0e0b;
+  --bg-hover: #15130f;
+  --bg-panel: #0d0c09;
 
-  --border: #1a1a1e;
-  --border-strong: #27272a;
-  --border-em: #3f3f46;
+  --border: #1d1a15;
+  --border-strong: #2a2620;
+  --border-em: #403a31;
 
-  --fg: #fafafa;
-  --fg-muted: #a1a1aa;
-  --fg-dim: #7e7e88;
-  --fg-dimmer: #52525b;
+  --fg: #f7f4ee;
+  --fg-muted: #a8a29a;
+  --fg-dim: #807a70;
+  --fg-dimmer: #57524a;
 
   --amber: #f59e0b;
   --amber-soft: rgba(245, 158, 11, 0.12);
@@ -24,17 +25,29 @@
   --blue: #60a5fa;
   --red: #f87171;
   --green: #34d399;
-  --pink: #f472b6;
 
   --font-display:
-    'Instrument Serif', 'Songti SC', 'SimSun', 'Noto Serif CJK SC',
-    'Times New Roman', Georgia, serif;
+    'Instrument Serif', 'Songti SC', 'Noto Serif CJK SC', 'Source Han Serif SC',
+    'PingFang SC', 'Microsoft YaHei', 'Times New Roman', Georgia, serif;
   --font-body:
-    'Inter', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', system-ui,
-    -apple-system, 'Segoe UI', Roboto, sans-serif;
+    'Instrument Sans', 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei',
+    system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono:
     'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, 'PingFang SC',
     'Noto Sans SC', monospace;
+
+  /* Type scale — five fixed steps (≈1.13 ratio) plus fluid display steps.
+     Every font-size in this file uses one of these. */
+  --text-2xs: 0.6875rem; /* 11px · mono micro labels, tags, table heads */
+  --text-xs: 0.75rem; /* 12px · breadcrumbs, footer, tooltips */
+  --text-sm: 0.8125rem; /* 13px · table cells, nav, code */
+  --text-base: 0.9375rem; /* 15px · body, buttons */
+  --text-lg: 1.0625rem; /* 17px · metric values, doc h3 */
+  --text-h3: clamp(1.4rem, 1rem + 1.4vw, 2.05rem);
+  --text-h2: clamp(1.5rem, 1rem + 2.4vw, 2.85rem);
+  --text-h1: clamp(1.5rem, 1rem + 1.6vw, 2.4rem);
+  --text-title: clamp(2rem, 1.25rem + 2.6vw, 3.15rem);
+  --text-display: clamp(4rem, 15vw + 0.25rem, 11rem);
 
   --gutter: max(
     clamp(1.25rem, 4vw, 2.5rem),
@@ -62,7 +75,7 @@ html {
 html,
 body {
   min-height: 100%;
-  background: #09090b;
+  background: var(--bg);
 }
 
 body {
@@ -70,11 +83,8 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: var(--text-base);
   line-height: 1.5;
-  font-feature-settings:
-    'ss01' 1,
-    'cv11' 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;
@@ -93,8 +103,7 @@ body {
 /* Atmospheric layers */
 .bg-grid,
 .bg-glow,
-.bg-glow-alt,
-.bg-scan {
+.bg-glow-alt {
   position: absolute;
   pointer-events: none;
 }
@@ -116,29 +125,6 @@ body {
     black 25%,
     transparent 92%
   );
-  animation: grid-drift 24s linear infinite;
-}
-
-.bg-scan {
-  inset: 0;
-  min-height: 100%;
-  background-image: repeating-linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.012) 0 1px,
-    transparent 1px 3px
-  );
-  mask-image: radial-gradient(
-    ellipse 70% 55% at 50% 35%,
-    black 0%,
-    transparent 85%
-  );
-  -webkit-mask-image: radial-gradient(
-    ellipse 70% 55% at 50% 35%,
-    black 0%,
-    transparent 85%
-  );
-  mix-blend-mode: screen;
-  opacity: 0.55;
 }
 
 .bg-glow {
@@ -168,16 +154,7 @@ body {
     transparent 72%
   );
   filter: blur(10px);
-  animation: glow-drift-alt 19s ease-in-out infinite alternate;
-}
-
-@keyframes grid-drift {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: 56px 56px;
-  }
+  opacity: 0.85;
 }
 
 @keyframes glow-drift {
@@ -187,17 +164,6 @@ body {
   }
   to {
     transform: translate3d(-44px, 28px, 0) scale(1.08);
-    opacity: 1;
-  }
-}
-
-@keyframes glow-drift-alt {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.7;
-  }
-  to {
-    transform: translate3d(36px, -22px, 0) scale(1.1);
     opacity: 1;
   }
 }
@@ -227,6 +193,35 @@ a:hover {
   color: var(--bg);
 }
 
+/* Focus: hide the ring for pointer users, show a clear amber ring for keyboard. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: var(--gutter);
+  z-index: 100;
+  padding: 0.6rem 0.9rem;
+  background: var(--amber);
+  color: var(--bg);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transform: translateY(-120%);
+  transition: transform 160ms ease;
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+  color: var(--bg);
+  outline-offset: -2px;
+}
+
 .mono {
   font-family: var(--font-mono);
   font-feature-settings:
@@ -244,7 +239,7 @@ a:hover {
   align-items: center;
   height: calc(60px + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) var(--gutter) 0;
-  background: rgba(9, 9, 11, 0.92);
+  background: rgba(11, 10, 8, 0.92);
   backdrop-filter: saturate(150%) blur(18px);
   -webkit-backdrop-filter: saturate(150%) blur(18px);
   border-bottom: 1px solid var(--border);
@@ -255,7 +250,7 @@ a:hover {
   align-items: baseline;
   gap: 0.5rem;
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--text-sm);
   letter-spacing: -0.01em;
   color: var(--fg);
 }
@@ -265,23 +260,10 @@ a:hover {
 .brand-mark {
   display: inline-block;
   color: var(--amber);
-  font-size: 18px;
+  font-size: var(--text-lg);
   line-height: 1;
   transform: translateY(2px);
   font-family: var(--font-display);
-  animation: brand-breathe 4s ease-in-out infinite alternate;
-}
-@keyframes brand-breathe {
-  from {
-    opacity: 0.82;
-    text-shadow: 0 0 8px rgba(245, 158, 11, 0.25);
-  }
-  to {
-    opacity: 1;
-    text-shadow:
-      0 0 18px rgba(245, 158, 11, 0.55),
-      0 0 32px rgba(245, 158, 11, 0.18);
-  }
 }
 .brand-name {
   color: var(--fg);
@@ -303,11 +285,11 @@ a:hover {
   border: 1px solid var(--border-strong);
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fg-muted);
-  background: rgba(10, 10, 13, 0.6);
+  background: rgba(13, 12, 9, 0.6);
 }
 .pulse {
   width: 6px;
@@ -344,7 +326,7 @@ a:hover {
   align-items: center;
   justify-content: flex-end;
   gap: 0.65rem;
-  font-size: 13.5px;
+  font-size: var(--text-sm);
   color: var(--fg-muted);
 }
 .site-nav a {
@@ -353,10 +335,21 @@ a:hover {
 .site-nav a:hover {
   color: var(--fg);
 }
+.nav-link {
+  padding: 5px 8px;
+  font-size: var(--text-sm);
+  letter-spacing: -0.005em;
+}
+.nav-link:hover {
+  color: var(--amber) !important;
+}
+.site-nav .lang-toggle {
+  margin-left: 0.35rem;
+}
 
 .lang-toggle {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   font-weight: 500;
   letter-spacing: 0.06em;
   color: var(--fg-muted) !important;
@@ -383,7 +376,7 @@ a:hover {
   padding: 5px 11px;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--fg) !important;
   transition:
     border-color 160ms ease,
@@ -416,7 +409,7 @@ a:hover {
   align-items: center;
   gap: 10px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--fg-muted);
@@ -427,22 +420,10 @@ a:hover {
   height: 5px;
   background: var(--amber);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px var(--amber-soft);
+  box-shadow:
+    0 0 0 3px var(--amber-soft),
+    0 0 8px rgba(245, 158, 11, 0.2);
   display: inline-block;
-  animation: dot-breathe 2.6s ease-in-out infinite;
-}
-@keyframes dot-breathe {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 3px var(--amber-soft),
-      0 0 8px rgba(245, 158, 11, 0.2);
-  }
-  50% {
-    box-shadow:
-      0 0 0 5px rgba(245, 158, 11, 0.22),
-      0 0 18px rgba(245, 158, 11, 0.45);
-  }
 }
 
 .section-head {
@@ -457,17 +438,17 @@ a:hover {
 .section-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.9rem, 3.6vw, 2.85rem);
+  font-size: var(--text-h2);
   line-height: 1.05;
   letter-spacing: -0.02em;
   color: var(--fg);
 }
+.section-title.section-title-sm {
+  font-size: var(--text-h3);
+}
 .section-title em {
   font-style: italic;
   color: var(--amber);
-  text-shadow:
-    0 0 24px rgba(245, 158, 11, 0.28),
-    0 0 56px rgba(245, 158, 11, 0.1);
 }
 
 /* Hero */
@@ -496,24 +477,14 @@ a:hover {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 400;
-  font-size: clamp(5.5rem, 14vw, 11rem);
+  font-size: var(--text-display);
   line-height: 0.88;
   letter-spacing: -0.045em;
   color: var(--fg);
   font-feature-settings: 'lnum' 1;
-  animation: num-breathe 5.2s ease-in-out infinite alternate;
-}
-@keyframes num-breathe {
-  from {
-    text-shadow:
-      0 0 28px rgba(245, 158, 11, 0.06),
-      0 0 60px rgba(245, 158, 11, 0.02);
-  }
-  to {
-    text-shadow:
-      0 0 36px rgba(245, 158, 11, 0.22),
-      0 0 96px rgba(245, 158, 11, 0.1);
-  }
+  text-shadow:
+    0 0 32px rgba(245, 158, 11, 0.14),
+    0 0 80px rgba(245, 158, 11, 0.06);
 }
 .display-value .num-sub {
   display: inline-flex;
@@ -521,7 +492,7 @@ a:hover {
   gap: 0.9rem;
   font-family: var(--font-body);
   font-style: normal;
-  font-size: clamp(1rem, 1.4vw, 1.3rem);
+  font-size: var(--text-lg);
   font-weight: 500;
   letter-spacing: -0.005em;
   color: var(--fg-muted);
@@ -548,19 +519,22 @@ a:hover {
   vertical-align: 1px;
 }
 
+/* Zone colours read as a single heat ramp: lower AHR999 = better entry.
+   bargain green → DCA blue → caution amber → bubble red. The chart threshold
+   lines and the 7d delta (down = green) follow the same rule. */
 .tier-bargain {
-  color: var(--red);
-}
-.tier-bargain .tier-glyph {
-  background: var(--red);
-  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.14);
-}
-.tier-dca {
   color: var(--green);
 }
-.tier-dca .tier-glyph {
+.tier-bargain .tier-glyph {
   background: var(--green);
   box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.14);
+}
+.tier-dca {
+  color: var(--blue);
+}
+.tier-dca .tier-glyph {
+  background: var(--blue);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14);
 }
 .tier-caution {
   color: var(--amber);
@@ -570,11 +544,11 @@ a:hover {
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.14);
 }
 .tier-bubble {
-  color: var(--pink);
+  color: var(--red);
 }
 .tier-bubble .tier-glyph {
-  background: var(--pink);
-  box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.14);
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.14);
 }
 .tier-na {
   color: var(--fg-dim);
@@ -586,7 +560,7 @@ a:hover {
 .hero-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.55rem, 3vw, 2.4rem);
+  font-size: var(--text-h1);
   line-height: 1.14;
   letter-spacing: -0.02em;
   color: var(--fg);
@@ -595,14 +569,11 @@ a:hover {
 .hero-title em {
   font-style: italic;
   color: var(--amber);
-  text-shadow:
-    0 0 24px rgba(245, 158, 11, 0.28),
-    0 0 56px rgba(245, 158, 11, 0.1);
 }
 
 .hero-lead {
   color: var(--fg-muted);
-  font-size: 15.5px;
+  font-size: var(--text-base);
   line-height: 1.6;
 }
 .hero-lead strong {
@@ -642,43 +613,18 @@ a:hover {
     rgba(245, 158, 11, 0.55) 50%,
     transparent 100%
   );
-  opacity: 0.35;
-  transition: opacity 260ms ease;
-  animation: metric-sheen 10s ease-in-out infinite;
+  opacity: 0;
+  transition:
+    opacity 260ms ease,
+    left 720ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.metric-card:nth-child(1)::before {
-  animation-delay: 0s;
-}
-.metric-card:nth-child(2)::before {
-  animation-delay: 2.2s;
-}
-.metric-card:nth-child(3)::before {
-  animation-delay: 4.4s;
-}
-.metric-card:nth-child(4)::before {
-  animation-delay: 6.6s;
-}
-.metric-card:hover {
-  background: rgba(245, 158, 11, 0.025);
-}
-.metric-card:hover::before {
-  opacity: 1;
-}
-@keyframes metric-sheen {
-  0% {
-    left: -60%;
-    opacity: 0.25;
+@media (hover: hover) {
+  .metric-card:hover {
+    background: rgba(245, 158, 11, 0.025);
   }
-  45% {
-    opacity: 0.7;
-  }
-  60% {
+  .metric-card:hover::before {
+    opacity: 1;
     left: 100%;
-    opacity: 0.25;
-  }
-  100% {
-    left: 100%;
-    opacity: 0.25;
   }
 }
 .metric-label {
@@ -686,7 +632,7 @@ a:hover {
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--fg-dim);
@@ -701,7 +647,7 @@ a:hover {
 }
 .metric-value {
   font-family: var(--font-mono);
-  font-size: 17px;
+  font-size: var(--text-lg);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--fg);
@@ -724,7 +670,7 @@ a:hover {
 }
 .hero-cta-row .mini-note {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fg-dim);
@@ -741,7 +687,7 @@ a:hover {
   background: var(--fg);
   color: var(--bg) !important;
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--text-base);
   letter-spacing: -0.005em;
   border: 1px solid var(--fg);
   border-radius: var(--radius);
@@ -782,13 +728,13 @@ a:hover {
   transform: translateX(140%);
 }
 .btn-primary .mono {
-  font-size: 11px;
-  color: rgba(9, 9, 11, 0.45);
+  font-size: var(--text-2xs);
+  color: rgba(11, 10, 8, 0.5);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 .btn-primary:hover .mono {
-  color: rgba(9, 9, 11, 0.55);
+  color: rgba(11, 10, 8, 0.6);
 }
 .btn-primary svg {
   width: 14px;
@@ -805,7 +751,7 @@ a:hover {
   color: var(--fg-muted) !important;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  font-size: 14px;
+  font-size: var(--text-base);
   font-weight: 500;
   letter-spacing: -0.005em;
   transition:
@@ -849,7 +795,7 @@ a:hover {
 }
 .chart-overlay .chip {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--fg-dim);
@@ -867,7 +813,6 @@ a:hover {
   z-index: 3;
   pointer-events: none;
   animation: corner-draw 720ms cubic-bezier(0.16, 1, 0.3, 1) 520ms backwards;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
 }
 .frame-corner.tl {
   top: -1px;
@@ -914,7 +859,7 @@ a:hover {
   gap: 1.25rem 1.75rem;
   margin-top: 14px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   color: var(--fg-dim);
   letter-spacing: 0.05em;
 }
@@ -952,10 +897,73 @@ a:hover {
   color: var(--blue);
 }
 .chart-legend .swatch.floor {
-  color: var(--red);
-}
-.chart-legend .swatch.dca {
   color: var(--green);
+}
+.chart-legend .swatch.caution {
+  color: var(--amber);
+}
+
+/* Range presets, right-aligned on the legend row */
+.chart-ranges {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.chart-ranges button {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  min-width: 36px;
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+.chart-ranges button:hover {
+  color: var(--fg);
+  border-color: var(--fg-dim);
+  background: var(--bg-hover);
+}
+.chart-ranges button.active {
+  color: var(--bg);
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+/* Historical context */
+.context-prose {
+  max-width: 68ch;
+  color: var(--fg-muted);
+  font-size: var(--text-base);
+  line-height: 1.72;
+  margin-bottom: 2rem;
+}
+.context-prose strong {
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.context-stats {
+  margin-bottom: 0;
+}
+.about-body a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: var(--border-em);
+  text-underline-offset: 3px;
+}
+.about-body a:hover {
+  color: var(--amber);
+  text-decoration-color: var(--amber);
 }
 
 /* Data table */
@@ -969,14 +977,14 @@ a:hover {
   width: 100%;
   min-width: 680px;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
 .data-table thead th {
   padding: 12px 18px;
   text-align: left;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -998,12 +1006,14 @@ a:hover {
 .data-table tbody tr:last-child {
   border-bottom: none;
 }
-.data-table tbody tr:hover {
-  background: var(--bg-hover);
-  box-shadow: inset 2px 0 0 0 var(--amber);
-}
-.data-table tbody tr:hover td.date {
-  color: var(--amber);
+@media (hover: hover) {
+  .data-table tbody tr:hover {
+    background: var(--bg-hover);
+    box-shadow: inset 2px 0 0 0 var(--amber);
+  }
+  .data-table tbody tr:hover td.date {
+    color: var(--amber);
+  }
 }
 .data-table td {
   padding: 10px 18px;
@@ -1013,6 +1023,7 @@ a:hover {
 }
 .data-table td.date {
   color: var(--fg-muted);
+  white-space: nowrap;
   transition: color 140ms ease;
 }
 .data-table td.strong {
@@ -1026,7 +1037,7 @@ a:hover {
   gap: 6px;
   padding: 3px 9px 3px 8px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1042,14 +1053,14 @@ a:hover {
   background: currentColor;
 }
 .regime.tier-bargain {
-  color: var(--red);
-  border-color: rgba(248, 113, 113, 0.35);
-  background: rgba(248, 113, 113, 0.06);
-}
-.regime.tier-dca {
   color: var(--green);
   border-color: rgba(52, 211, 153, 0.35);
   background: rgba(52, 211, 153, 0.06);
+}
+.regime.tier-dca {
+  color: var(--blue);
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(96, 165, 250, 0.06);
 }
 .regime.tier-caution {
   color: var(--amber);
@@ -1057,9 +1068,9 @@ a:hover {
   background: rgba(245, 158, 11, 0.06);
 }
 .regime.tier-bubble {
-  color: var(--pink);
-  border-color: rgba(244, 114, 182, 0.35);
-  background: rgba(244, 114, 182, 0.06);
+  color: var(--red);
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.06);
 }
 .regime.tier-na {
   color: var(--fg-dim);
@@ -1080,41 +1091,24 @@ a:hover {
   align-items: center;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--fg-dim);
   gap: 1rem;
 }
 .code-label .lhs {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.code-label .traffic {
-  display: inline-flex;
-  gap: 5px;
-}
-.code-label .traffic span {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--border-em);
-  display: inline-block;
-}
-.code-label .traffic span:nth-child(1) {
-  background: rgba(248, 113, 113, 0.6);
-}
-.code-label .traffic span:nth-child(2) {
-  background: rgba(245, 158, 11, 0.55);
-}
-.code-label .traffic span:nth-child(3) {
-  background: rgba(52, 211, 153, 0.55);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .copy-hint {
+  flex: 0 0 auto;
+  white-space: nowrap;
   color: var(--fg-dim);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   transition: color 160ms ease;
 }
 .code-card.copied .copy-hint {
@@ -1124,7 +1118,7 @@ a:hover {
 .code-block {
   padding: 1.25rem 1.5rem;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--fg);
   white-space: pre;
   overflow-x: auto;
@@ -1160,7 +1154,7 @@ a:hover {
 .about-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.9rem, 3.2vw, 2.75rem);
+  font-size: var(--text-h2);
   line-height: 1.08;
   letter-spacing: -0.022em;
   color: var(--fg);
@@ -1169,16 +1163,13 @@ a:hover {
 .about-title em {
   font-style: italic;
   color: var(--amber);
-  text-shadow:
-    0 0 24px rgba(245, 158, 11, 0.28),
-    0 0 56px rgba(245, 158, 11, 0.1);
 }
 .about-body {
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
   color: var(--fg-muted);
-  font-size: 15.5px;
+  font-size: var(--text-base);
   line-height: 1.72;
   max-width: 68ch;
   margin-bottom: 2.5rem;
@@ -1192,60 +1183,135 @@ a:hover {
   letter-spacing: 0.01em;
 }
 
-.regime-grid {
+.regime-scale {
+  --seg: 25%;
+  position: relative;
+  padding-top: 2.4rem;
+}
+.regime-track {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border: 1px solid var(--border);
+  height: 6px;
+  border-radius: 3px;
+  overflow: visible;
+}
+.regime-track .seg {
+  background: currentColor;
+  opacity: 0.55;
+}
+.regime-track .seg:first-child {
+  border-radius: 3px 0 0 3px;
+}
+.regime-track .seg:last-child {
+  border-radius: 0 3px 3px 0;
+}
+.regime-marker {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--fg);
+  border: 3px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--fg-dim);
+  transform: translate(-50%, -50%);
+}
+.regime-marker-value {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--fg);
   background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
-.regime-card {
-  padding: 1.05rem 1.1rem 1.15rem;
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.regime-marker-value::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 7px;
+  background: var(--fg-dim);
+}
+.regime-ticks {
   position: relative;
+  height: 1.4rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
 }
-.regime-card:last-child {
-  border-right: none;
+.regime-ticks span {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
 }
-.regime-card .label-row {
+.regime-ticks span::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 1px;
+  height: 6px;
+  background: var(--border-em);
+}
+.regime-labels {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+.regime-labels .label-row {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
-.regime-card .dot {
+.regime-labels .dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: currentColor;
   flex: 0 0 auto;
 }
-.regime-card .label {
-  font-family: var(--font-body);
-  font-size: 13.5px;
+.regime-labels .label {
+  font-size: var(--text-sm);
   font-weight: 500;
-  letter-spacing: -0.005em;
   color: currentColor;
 }
-.regime-card .range {
+.regime-labels .range {
+  display: block;
+  margin-top: 4px;
+  padding-left: 15px; /* dot (7px) + gap (8px): align with the label text */
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   color: var(--fg-dim);
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
-.regime-card.tier-bargain {
-  color: var(--red);
-}
-.regime-card.tier-dca {
+.regime-labels .tier-bargain,
+.regime-track .tier-bargain {
   color: var(--green);
 }
-.regime-card.tier-caution {
+.regime-labels .tier-dca,
+.regime-track .tier-dca {
+  color: var(--blue);
+}
+.regime-labels .tier-caution,
+.regime-track .tier-caution {
   color: var(--amber);
 }
-.regime-card.tier-bubble {
-  color: var(--pink);
+.regime-labels .tier-bubble,
+.regime-track .tier-bubble {
+  color: var(--red);
 }
 
 /* Footer — slim strip only */
@@ -1263,7 +1329,7 @@ a:hover {
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-xs);
   letter-spacing: 0.04em;
 }
 .footer-nav a {
@@ -1278,7 +1344,7 @@ a:hover {
   gap: 10px 14px;
   flex-wrap: wrap;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   color: var(--fg-dim);
 }
@@ -1288,7 +1354,7 @@ a:hover {
   gap: 0.4rem;
   font-family: var(--font-body);
   letter-spacing: -0.005em;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--fg-muted);
   text-transform: none;
   font-weight: 500;
@@ -1296,7 +1362,7 @@ a:hover {
 .footer-strip .footer-brand .brand-mark {
   color: var(--amber);
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: var(--text-base);
   transform: translateY(2px);
 }
 .footer-strip .footer-brand .brand-slash {
@@ -1310,13 +1376,10 @@ a:hover {
 .footer-strip .footer-sep {
   color: var(--fg-dim);
 }
-.footer-strip .footer-warn {
-  color: var(--fg-muted);
-}
 .footer-github {
   font-family: var(--font-body);
   color: var(--fg-muted) !important;
-  font-size: 13px;
+  font-size: var(--text-sm);
   letter-spacing: -0.005em;
   text-transform: none;
   margin-left: auto;
@@ -1327,13 +1390,13 @@ a:hover {
 
 /* ECharts tooltip */
 .ahr-tooltip {
-  background: rgba(9, 9, 11, 0.94);
+  background: rgba(11, 10, 8, 0.94);
   border: 1px solid var(--border-em);
   padding: 0.7rem 0.85rem;
   border-radius: 2px;
   color: var(--fg);
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
   box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
@@ -1345,7 +1408,7 @@ a:hover {
   border-bottom: 1px solid var(--border);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .ahr-tooltip table {
   border-collapse: collapse;
@@ -1435,21 +1498,43 @@ a:hover {
     opacity: 1;
     transform: none;
   }
-  .bg-grid,
   .bg-glow,
-  .bg-glow-alt,
-  .brand-mark,
-  .label-dot,
-  .display-value .num,
-  .metric-card::before,
+  .pulse::before,
   .frame-corner {
     animation: none !important;
+  }
+  .metric-card::before {
+    transition: none;
   }
   .btn-primary::after {
     display: none;
   }
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* Touch: every tappable control reaches 44px on coarse pointers */
+@media (pointer: coarse) {
+  .lang-toggle,
+  .nav-pill,
+  .nav-link,
+  .chart-ranges button,
+  .footer-nav a,
+  .footer-github {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .chart-ranges button {
+    padding: 0 12px;
+  }
+  .btn-primary,
+  .btn-ghost {
+    min-height: 44px;
+  }
+  .doc-breadcrumb a {
+    padding: 8px 0;
   }
 }
 
@@ -1462,10 +1547,6 @@ a:hover {
   .live-indicator {
     display: none;
   }
-  .site-nav {
-    gap: 0.5rem;
-    font-size: 13px;
-  }
   .site-nav .nav-hide-md {
     display: none;
   }
@@ -1476,9 +1557,6 @@ a:hover {
   .hero-top {
     gap: 1.25rem;
     margin-bottom: 1.5rem;
-  }
-  .display-value .num {
-    font-size: clamp(4rem, 18vw, 6.5rem);
   }
   .display-value .num-sub {
     padding-bottom: 0.4em;
@@ -1507,9 +1585,6 @@ a:hover {
   .section-slim {
     padding: 3rem var(--gutter);
   }
-  .section-title {
-    font-size: clamp(1.5rem, 4.8vw, 2rem);
-  }
 
   .chart-frame {
     height: clamp(320px, 50vh, 440px);
@@ -1517,15 +1592,6 @@ a:hover {
 
   .about-section {
     padding: 3.5rem var(--gutter);
-  }
-  .regime-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .regime-card:nth-child(2n) {
-    border-right: none;
-  }
-  .regime-card:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--border);
   }
 }
 
@@ -1539,7 +1605,15 @@ a:hover {
   }
   .data-table thead th,
   .data-table td {
-    padding: 9px 12px;
+    padding: 9px 10px;
+  }
+  .data-table th:first-child,
+  .data-table td:first-child {
+    padding-left: 14px;
+  }
+  .data-table th:last-child,
+  .data-table td:last-child {
+    padding-right: 14px;
   }
   .hero-cta-row {
     flex-direction: column;
@@ -1561,7 +1635,20 @@ a:hover {
   }
   .chart-legend {
     gap: 0.5rem 1rem;
-    font-size: 10.5px;
+  }
+  .chart-ranges {
+    margin-left: 0;
+    width: 100%;
+  }
+  .regime-labels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 1rem;
+  }
+  .regime-ticks {
+    height: 1.6rem;
+  }
+  .chart-ranges button {
+    flex: 1 1 0;
   }
   .chart-overlay {
     display: none;
@@ -1569,37 +1656,42 @@ a:hover {
   .footer-strip .footer-github {
     margin-left: 0;
   }
-  .regime-grid {
-    grid-template-columns: 1fr;
-  }
-  .regime-card {
-    border-right: none !important;
-    border-bottom: 1px solid var(--border);
-  }
-  .regime-card:last-child {
-    border-bottom: none;
-  }
 }
 
 @media (max-width: 440px) {
-  .metric-ribbon {
-    grid-template-columns: 1fr;
+  .data-table {
+    font-size: var(--text-xs);
+  }
+  /* Phone width: the regime column collapses to its colour dot; the label
+     stays in the DOM for screen readers and as a title on tap-and-hold. */
+  .data-table .regime {
+    padding: 6px;
+    gap: 0;
+  }
+  .data-table .regime-dot {
+    width: 7px;
+    height: 7px;
+  }
+  .data-table .regime-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .data-table th:last-child,
+  .data-table td:last-child {
+    text-align: center;
   }
   .metric-card {
-    border-right: none !important;
-    border-bottom: 1px solid var(--border);
+    padding: 0.8rem 0.9rem 0.9rem;
   }
-  .metric-card:last-child {
-    border-bottom: none;
+  .metric-label {
+    letter-spacing: 0.08em;
   }
-  .display-value .num {
-    font-size: clamp(3.5rem, 20vw, 5rem);
-  }
-  .section-title {
-    font-size: clamp(1.4rem, 6vw, 1.8rem);
-  }
-  .about-title {
-    font-size: clamp(1.5rem, 6vw, 2rem);
+  .metric-value {
+    font-size: var(--text-base);
   }
   .section-head {
     gap: 1rem;
@@ -1608,16 +1700,11 @@ a:hover {
   .hero {
     padding: 1.75rem var(--gutter) 2.25rem;
   }
-  .hero-lead {
-    font-size: 14.5px;
-  }
   .code-block {
     padding: 1rem 1.1rem;
-    font-size: 12px;
   }
   .code-label {
     padding: 8px 12px;
-    font-size: 10px;
   }
   .site-header {
     padding: env(safe-area-inset-top)
@@ -1642,7 +1729,7 @@ a:hover {
   align-items: center;
   gap: 0.5rem;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fg-dim);
@@ -1670,7 +1757,7 @@ a:hover {
   align-items: center;
   gap: 10px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--fg-muted);
@@ -1679,7 +1766,7 @@ a:hover {
 .doc-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(2.1rem, 5vw, 3.15rem);
+  font-size: var(--text-title);
   line-height: 1.05;
   letter-spacing: -0.022em;
   color: var(--fg);
@@ -1687,21 +1774,18 @@ a:hover {
 .doc-title em {
   font-style: italic;
   color: var(--amber);
-  text-shadow:
-    0 0 24px rgba(245, 158, 11, 0.28),
-    0 0 56px rgba(245, 158, 11, 0.1);
 }
 .doc-lead {
   margin-top: 1.1rem;
   color: var(--fg-muted);
-  font-size: 16px;
+  font-size: var(--text-base);
   line-height: 1.65;
   max-width: 68ch;
 }
 
 .doc-article {
   color: var(--fg-muted);
-  font-size: 15.5px;
+  font-size: var(--text-base);
   line-height: 1.75;
 }
 .doc-article > * + * {
@@ -1710,7 +1794,7 @@ a:hover {
 .doc-article h2 {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.55rem, 3.2vw, 2.05rem);
+  font-size: var(--text-h3);
   line-height: 1.12;
   letter-spacing: -0.018em;
   color: var(--fg);
@@ -1727,7 +1811,7 @@ a:hover {
 .doc-article h3 {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 1.06rem;
+  font-size: var(--text-lg);
   letter-spacing: -0.01em;
   color: var(--fg);
   margin-top: 2rem;
@@ -1783,7 +1867,7 @@ a:hover {
 }
 .doc-article pre {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.7;
   color: var(--fg);
   background: var(--bg-elevated);
@@ -1796,7 +1880,7 @@ a:hover {
   background: none;
   border: none;
   padding: 0;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: inherit;
 }
 .doc-article blockquote {
@@ -1824,12 +1908,12 @@ a:hover {
   width: 100%;
   min-width: 520px;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: var(--text-sm);
 }
 .doc-article thead th {
   text-align: left;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--text-2xs);
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1859,7 +1943,7 @@ a:hover {
   background: var(--bg-elevated);
   padding: 1rem 1.25rem;
   border-radius: var(--radius);
-  font-size: 14.5px;
+  font-size: var(--text-base);
   line-height: 1.65;
   color: var(--fg-muted);
 }
@@ -1886,7 +1970,7 @@ a:hover {
   list-style: none;
   padding: 1.05rem 1.25rem;
   font-weight: 500;
-  font-size: 15px;
+  font-size: var(--text-base);
   color: var(--fg);
   display: flex;
   justify-content: space-between;
@@ -1900,7 +1984,7 @@ a:hover {
   content: '+';
   color: var(--fg-dim);
   font-family: var(--font-mono);
-  font-size: 17px;
+  font-size: var(--text-lg);
   line-height: 1;
   flex: 0 0 auto;
 }
@@ -1914,7 +1998,7 @@ a:hover {
 .doc-faq .faq-a {
   padding: 0 1.25rem 1.2rem;
   color: var(--fg-muted);
-  font-size: 14.5px;
+  font-size: var(--text-base);
   line-height: 1.72;
 }
 .doc-faq .faq-a > * + * {
@@ -1957,13 +2041,13 @@ a:hover {
 }
 .doc-related .r-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--fg-dim);
 }
 .doc-related .r-title {
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--fg);
   font-weight: 500;
 }
@@ -1978,8 +2062,5 @@ a:hover {
   .doc-article h2 {
     margin-top: 2.5rem;
     padding-top: 1.75rem;
-  }
-  .doc-article {
-    font-size: 15px;
   }
 }

@@ -17,10 +17,10 @@ const canonical = `https://ahr999.aix4u.com${path}`;
 
 const title = isEn
   ? 'AHR999 Data Format · JSON & CSV Field Reference'
-  : 'AHR999 数据格式 · JSON 与 CSV 字段说明';
+  : 'AHR999 囤币指标数据格式 · JSON 与 CSV 字段说明';
 const description = isEn
   ? 'The AHR999 dataset field by field: JSON and CSV shapes, types, nullability, how null is serialized, and the invariants consumers can rely on.'
-  : 'AHR999 数据集逐字段说明：JSON 与 CSV 结构、类型、可空性、null 的序列化方式，以及消费者可依赖的不变量。';
+  : 'AHR999 囤币指标数据集逐字段说明：JSON 与 CSV 结构、类型、可空性、null 的序列化方式，以及消费者可依赖的不变量。';
 const eyebrow = isEn ? 'Data format' : '数据格式';
 const heading = isEn
   ? 'The <em>AHR999</em> data format'
@@ -43,7 +43,12 @@ const structuredData = [
     inLanguage: isEn ? 'en' : 'zh-Hans',
     url: canonical,
     mainEntityOfPage: canonical,
-    about: 'AHR999 Bitcoin hoarding index dataset',
+    about: {
+      '@type': 'Dataset',
+      '@id': 'https://ahr999.aix4u.com/#dataset',
+      name: 'AHR999 Bitcoin Hoarding Index Dataset (daily, 2017–present)',
+      url: 'https://ahr999.aix4u.com/',
+    },
     license: 'https://creativecommons.org/licenses/by/4.0/',
     author: {
       '@type': 'Organization',

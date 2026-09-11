@@ -22,7 +22,7 @@ intended for AI agents and crawlers that want the complete contract on one page.
 - JSON dataset: https://ahr999.aix4u.com/datasets/ahr999.json
 - CSV dataset: https://ahr999.aix4u.com/datasets/ahr999.csv
 - OpenAPI 3.1 description: https://ahr999.aix4u.com/openapi.json
-- API catalog (linkset): https://ahr999.aix4u.com/.well-known/api-catalog
+- API catalog (linkset): https://ahr999.aix4u.com/api-catalog
 
 Both data endpoints are static, read-only, require no key, and respond with
 `Access-Control-Allow-Origin: *`. The series changes at most once per day, after
