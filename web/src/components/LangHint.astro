@@ -1,0 +1,37 @@
+---
+/**
+ * One-line, dismissible hint shown only to visitors whose browser prefers
+ * Chinese while they are on an English page. Pure client-side: crawlers see
+ * a hidden element and no redirect, so hreflang stays the routing authority.
+ */
+export interface Props {
+  /** The Chinese twin of the current page, e.g. '/zh/methodology/'. */
+  zhHref: string;
+}
+const { zhHref } = Astro.props;
+---
+
+<div class="lang-hint" id="lang-hint" hidden lang="zh-Hans" role="status">
+  <span class="lang-hint-text">本站提供中文版。</span>
+  <a class="lang-hint-link" href={zhHref} hreflang="zh-Hans">切换到中文 →</a>
+  <button type="button" class="lang-hint-close" aria-label="关闭提示">×</button>
+</div>
+
+<script>
+  const KEY = 'ahr999:lang-hint-dismissed';
+  const el = document.getElementById('lang-hint');
+  const prefersZh = (navigator.languages ?? [navigator.language]).some((l) =>
+    /^zh\b/i.test(l),
+  );
+  const onEnglishPage = !document.documentElement.lang.startsWith('zh');
+  if (el && prefersZh && onEnglishPage && !localStorage.getItem(KEY)) {
+    el.removeAttribute('hidden');
+    el.querySelector('.lang-hint-close')?.addEventListener('click', () => {
+      localStorage.setItem(KEY, '1');
+      el.setAttribute('hidden', '');
+    });
+    el.querySelector('.lang-hint-link')?.addEventListener('click', () => {
+      localStorage.setItem(KEY, '1');
+    });
+  }
+</script>

@@ -393,6 +393,66 @@ a:hover {
   height: 14px;
 }
 
+/* Language hint (shown by script only to zh-preferring browsers on en pages) */
+.lang-hint {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem var(--gutter);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+.lang-hint-link {
+  color: var(--amber);
+  font-weight: 500;
+}
+.lang-hint-close {
+  appearance: none;
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  color: var(--fg-dim);
+  font-size: var(--text-base);
+  line-height: 1;
+  cursor: pointer;
+}
+.lang-hint-close:hover {
+  color: var(--fg);
+  border-color: var(--fg-dim);
+}
+
+/* CJK typography: Han glyphs read smaller than Latin at the same size and
+   must not be tracked tight; give Chinese pages a larger base and looser
+   leading, and neutralise the negative tracking on display type. */
+html:lang(zh-Hans) {
+  --text-base: 1rem;
+}
+html:lang(zh-Hans) .hero-title,
+html:lang(zh-Hans) .section-title,
+html:lang(zh-Hans) .about-title,
+html:lang(zh-Hans) .doc-title,
+html:lang(zh-Hans) .doc-article h2,
+html:lang(zh-Hans) .doc-article h3 {
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+html:lang(zh-Hans) .hero-lead,
+html:lang(zh-Hans) .about-body,
+html:lang(zh-Hans) .context-prose,
+html:lang(zh-Hans) .doc-lead,
+html:lang(zh-Hans) .doc-article,
+html:lang(zh-Hans) .doc-faq .faq-a,
+html:lang(zh-Hans) .doc-note {
+  line-height: 1.8;
+}
+
 /* Sections */
 .section {
   max-width: var(--maxw);

@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import '../styles/global.css';
 import datasetJson from '../../public/datasets/ahr999.json';
 import { docNav } from '../lib/docNav';
+import LangHint from './LangHint.astro';
 
 export interface Props {
   lang: 'en' | 'zh';
@@ -559,6 +560,8 @@ const webPageStructuredData = JSON.stringify({
     <meta property="og:type" content="website" />
     <meta property="og:url" content={pageUrl} />
     <meta property="og:site_name" content="ahr999 dataset" />
+    <meta property="og:locale" content={isEn ? 'en_US' : 'zh_CN'} />
+    <meta property="og:locale:alternate" content={isEn ? 'zh_CN' : 'en_US'} />
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
@@ -673,6 +676,7 @@ const webPageStructuredData = JSON.stringify({
         </a>
       </nav>
     </header>
+    {isEn && <LangHint zhHref={zhUrl} />}
 
     <main id="main">
       <!-- HERO -->
